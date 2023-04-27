@@ -1,0 +1,11 @@
+*.o
+*.lst
+frontend
+middleend
+functions
+main
+*.stass
+*.dot
+*.png
+*.txt
+lib
