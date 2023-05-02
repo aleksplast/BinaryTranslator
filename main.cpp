@@ -30,7 +30,6 @@ int main(int argc, char* argv[])
     tree.anchor = node;
 
     CreateAncestor(node, NULL, &tree);
-    ChangeCoreFunctions(node);
     TreeGraphDump(&tree, 0, __LINE__, __func__, __FILE__);
     SimplifyCode(&tree);
 
@@ -42,6 +41,8 @@ int main(int argc, char* argv[])
     TreeGraphDump(&tree, 0, __LINE__, __func__, __FILE__);
 
     CreateAncestor(tree.anchor, NULL, &tree);
+
+    TreeToIR(&tree);
 
     return 0;
 }
