@@ -10,6 +10,8 @@ int main(int argc, char* argv[])
 {
     const char* input = GetComArg(argc, argv);
     const char data[50] = "lib/data.txt";
+    FILE* fp = fopen("dumpfile.txt", "w");
+    fclose(fp);
 
     setlocale(LC_ALL, "Rus");
     Source datasrc = InputHandler(input);
@@ -24,7 +26,6 @@ int main(int argc, char* argv[])
     Node** nodes = LexicAnalizer(datastr, &namestable);
 
     Node* node = GetGrammar(nodes);
-    printf("HERE\n");
 
     TreeCtor(&tree, NUM_TYPE, 0, OP_UNKNOWN, NULL, log);
     tree.anchor = node;
@@ -33,7 +34,6 @@ int main(int argc, char* argv[])
     TreeGraphDump(&tree, 0, __LINE__, __func__, __FILE__);
     SimplifyCode(&tree);
 
-    printf("HERE\n");
     DataPrint(node);
     node = ReadFromStandart(data);
 

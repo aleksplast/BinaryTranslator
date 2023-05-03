@@ -7,11 +7,21 @@
 #include "../functions/diftree.h"
 #include "../functions/stack.h"
 
+struct BlockIR;
+
 enum Location
 {
-    STACK,
+    STACK = 1,
     MEM,
     REG,
+};
+
+enum OPERTYPE
+{
+    NONE    = 0,
+    VARTYPE = 1,
+    BLOCKTYPE,
+    NUMTYPE,
 };
 
 struct Variable
@@ -28,19 +38,36 @@ struct VarTable
     int size;
 };
 
+struct OperatorIR
+{
+    OPERTYPE type;
+    Variable* var;
+    int value;
+    BlockIR* block;
+};
+
 struct IRCommand
 {
     OperType type;
-    Variable dest;
-    Variable oper1;
-    Variable oper2;
+    OperatorIR dest;
+    OperatorIR oper1;
+    OperatorIR oper2;
+    size_t size;
+};
+
+struct BlockIR
+{
+    IRCommand* commands;
+    int numcommands;
+    int capacity;
     size_t size;
 };
 
 struct FuncIR
 {
     VarTable table;
-    IRCommand* commands;
+    BlockIR* blocks;
+    int blocksnum;
     size_t size;
 };
 
@@ -53,6 +80,30 @@ int FuncToIR(Node* node, FuncIR* function);
 int CountVariables(Node* node, int* num);
 
 int FillVarTable(Node* node, VarTable* vartable, int* num);
+
+int NodeToIR(Node* node, FuncIR* function, int blocknum);
+
+int BlockToIR(Node* node, FuncIR* function, int blocknum);
+
+int CountBlocks(Node* node, int* num);
+
+int CountCommands(Node* node, int* num);
+
+int DumpFunc(FuncIR* function);
+
+int DumpTable(FILE* file, VarTable* table);
+
+int DumpVariable(FILE* fp, Variable* var);
+
+int PrintLocation(FILE* fp, Location loc);
+
+int DumpOperator(FILE* fp, OperatorIR* oper);
+
+int DumpCommand(FILE* fp, IRCommand* command);
+
+int DumpBlock(FILE* fp, BlockIR* block);
+
+int PrintType(FILE* fp, OPERTYPE type);
 
 VarTable CreateVarTable(Node* node);
 
