@@ -36,6 +36,7 @@ struct VarTable
 {
     Variable* table;
     int size;
+    int capacity;
 };
 
 struct OperatorIR
@@ -58,9 +59,9 @@ struct IRCommand
 struct BlockIR
 {
     IRCommand* commands;
-    int numcommands;
+    VarTable* table;
     int capacity;
-    size_t size;
+    int size;
 };
 
 struct FuncIR
@@ -68,6 +69,7 @@ struct FuncIR
     VarTable table;
     BlockIR* blocks;
     int blocksnum;
+    int curblock;
     size_t size;
 };
 
@@ -81,9 +83,19 @@ int CountVariables(Node* node, int* num);
 
 int FillVarTable(Node* node, VarTable* vartable, int* num);
 
-int NodeToIR(Node* node, FuncIR* function, int blocknum);
+void* NodeToIR(Node* node,FuncIR* function,  BlockIR* block);
 
-int BlockToIR(Node* node, FuncIR* function, int blocknum);
+int BlockToIR(Node* node, FuncIR* function, BlockIR* block);
+
+void* VarToIR(Node* node,FuncIR* function,  BlockIR* block);
+
+void* StatementToIR(Node* node,FuncIR* function,  BlockIR* block);
+
+void* ArithOperToIR(Node* node,FuncIR* function,  BlockIR* block, OperType optype);
+
+void* EqToIR(Node* node, FuncIR* function, BlockIR* block);
+
+void* IfToIR(Node* node, FuncIR* function, BlockIR* block);
 
 int CountBlocks(Node* node, int* num);
 

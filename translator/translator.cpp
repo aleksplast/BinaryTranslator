@@ -13,16 +13,17 @@
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 #pragma GCC diagnostic ignored "-Wswitch"
 
+#define CurCmd block->commands[block->size]
 
 static OperatorIR fake = {NONE, NULL, 0, NULL};
 int VARSIZE = 40;
+int CurBlock = 0;
 
 FuncIR* TreeToIR(Tree* tree)
 {
     int funcnum = CountFunctions(tree);
     Node* node = tree->anchor;
     int counter = 0;
-    printf("numfunc = %d\n", funcnum);
 
     FuncIR* functions = (FuncIR*) calloc(funcnum, sizeof(FuncIR));
 
@@ -56,15 +57,16 @@ int FuncToIR(Node* node, FuncIR* function)
 {
     VarTable vartable = CreateVarTable(node);
     function->table = vartable;
+    printf("TABLE\n");
 
     int blocksnum = 1;
     CountBlocks(node, &blocksnum);
     function->blocksnum = blocksnum;
-    printf("blocksnum = %d\n", blocksnum);
     function->blocks = (BlockIR*) calloc(function->blocksnum, sizeof(BlockIR));
+    function->curblock = 0;
+    printf("BLOCK\n");
 
-    printf("HERE1\n");
-    BlockToIR(node, function, 0);
+    BlockToIR(node->rightchild, function, &function->blocks[0]);
     DumpFunc(function);
 
     return NOERR;
@@ -89,7 +91,10 @@ int CountCommands(Node* node, int* num)
     if (node->leftchild)
     {
         if (node->leftchild->optype == OP_IF || node->leftchild->optype == OP_WHILE || node->leftchild->optype == OP_ELSE)
+        {
+            *num += 1;
             return NOERR;
+        }
     }
     if (node->rightchild)
         CountCommands(node->rightchild, num);
@@ -99,44 +104,230 @@ int CountCommands(Node* node, int* num)
     return NOERR;
 }
 
-int BlockToIR(Node* node, FuncIR* function, int blocknum)
+int BlockToIR(Node* node, FuncIR* function, BlockIR* block)
 {
     int numcommands = 0;
     CountCommands(node, &numcommands);
-    printf("numcommands = %d\n", numcommands);
-    function->blocks[blocknum].numcommands = numcommands;
-    function->blocks[blocknum].commands = (IRCommand*) calloc(numcommands, sizeof(IRCommand));
 
-    printf("HERE2\n");
-    NodeToIR(node, function, blocknum);
+    block->capacity = numcommands;
+    block->commands = (IRCommand*) calloc(numcommands, sizeof(IRCommand));
+    block->table = &function->table;
+
+    NodeToIR(node, function, block);
 
     return NOERR;
 }
 
-int NodeToIR(Node* node, FuncIR* function, int blocknum)
+void* NodeToIR(Node* node, FuncIR* function, BlockIR* block)
 {
-    printf("HERE\n");
+    printf("NODING\n");
     switch(node->optype)
     {
         case OP_VAR:
-            printf("capacity = %d\n", function->blocks[blocknum].capacity);
-            function->blocks[blocknum].commands[function->blocks[blocknum].capacity].type = OP_VAR;
-            Variable* var = SearchInTable(&function->table, function->table.size, node->leftchild->varvalue);
-            function->blocks[blocknum].commands[function->blocks[blocknum].capacity].dest.type = VARTYPE;
-            function->blocks[blocknum].commands[function->blocks[blocknum].capacity].dest.var = var;
-            function->blocks[blocknum].commands[function->blocks[blocknum].capacity].oper1.type = NUMTYPE;
-            function->blocks[blocknum].commands[function->blocks[blocknum].capacity].oper1.value = node->rightchild->val;
-            function->blocks[blocknum].commands[function->blocks[blocknum].capacity].oper2 = fake;
-            function->blocks[blocknum].capacity += 1;
+            return VarToIR(node, function, block);
+        case OP_EQ:
+            return EqToIR(node, function, block);
+        case OP_ADD:
+            return ArithOperToIR(node, function, block, OP_ADD);
+        case OP_MUL:
+            return ArithOperToIR(node, function, block, OP_MUL);
+        case OP_DIV:
+            return ArithOperToIR(node, function, block, OP_DIV);
+        case OP_SUB:
+            return ArithOperToIR(node, function, block, OP_SUB);
+        case OP_STAT:
+            return StatementToIR(node, function, block);
+        case OP_IF:
+            return IfToIR(node, function, block);
+        case OP_NIL:
+            return NULL;
     }
-    if (node->leftchild)
-        NodeToIR(node->leftchild, function, blocknum);
-    if (node->rightchild)
-        NodeToIR(node->rightchild, function, blocknum);
-    if (node->type != OP_TYPE || node->optype == OP_STAT || node->optype == OP_NIL || node->optype == OP_FUNC)
-        return NOERR;
 
-    return NOERR;
+    return NULL;
+}
+
+void* StatementToIR(Node* node, FuncIR* function, BlockIR* block)
+{
+    if (node->leftchild)
+        NodeToIR(node->leftchild, function, block);
+    if (node->rightchild)
+        NodeToIR(node->rightchild, function, block);
+
+    return NULL;
+}
+
+void* ArithOperToIR(Node* node, FuncIR* function, BlockIR* block, OperType optype)
+{
+    Variable* oper1 = NULL;
+    Variable* oper2 = NULL;
+    OPERTYPE type1 = NONE;
+    OPERTYPE type2 = NONE;
+    int val1 = 0;
+    int val2 = 0;
+
+    if (node->rightchild->type == OP_TYPE)
+    {
+        oper2 = (Variable*) NodeToIR(node->rightchild, function, block);
+        type2 = VARTYPE;
+    }
+    else if (node->rightchild->type == VAR_TYPE)
+    {
+        oper2 = SearchInTable(block->table, block->table->capacity, node->rightchild->varvalue);
+        type2 = VARTYPE;
+    }
+    else
+    {
+        type2 = NUMTYPE;
+        val2 = node->rightchild->val;
+    }
+
+    if (node->leftchild->type == OP_TYPE)
+    {
+        oper1 = (Variable*) NodeToIR(node->leftchild, function, block);
+        type1 = VARTYPE;
+    }
+    else if (node->leftchild->type == VAR_TYPE)
+    {
+        oper1 = SearchInTable(block->table, block->table->capacity, node->leftchild->varvalue);
+        type1 = VARTYPE;
+    }
+    else
+    {
+        type1 = NUMTYPE;
+        val1 = node->leftchild->val;
+    }
+
+    CurCmd.oper1.type = type1;
+    CurCmd.oper1.var = oper1;
+    CurCmd.oper1.value = val1;
+    CurCmd.oper2.type = type2;
+    CurCmd.oper2.var = oper2;
+    CurCmd.oper2.value = val2;
+
+    CurCmd.type = optype;
+
+    char* temp = (char*) calloc(VARSIZE, sizeof(char));
+    sprintf(temp, "temp%d", block->table->size);
+
+    block->table->table[block->table->size].location = STACK;
+    block->table->table[block->table->size].name = temp;
+    block->table->table[block->table->size].offset = (block->table->size + 1) * 8;
+    block->table->table[block->table->size].num = block->table->size;
+
+    CurCmd.dest.type = VARTYPE;
+    CurCmd.dest.var = &block->table->table[block->table->size];
+
+    block->table->size += 1;
+    block->size += 1;
+
+    return (void*)&block->table->table[block->table->size - 1];
+}
+
+void* EqToIR(Node* node, FuncIR* function, BlockIR* block)
+{
+    Variable* oper1 = NULL;
+    OPERTYPE type1 = NONE;
+    int val1 = 0;
+
+    if (node->rightchild->type == OP_TYPE)
+    {
+        type1 = VARTYPE;
+        oper1 = (Variable*) NodeToIR(node->rightchild, function, block);
+    }
+    else if (node->rightchild->type == NUM_TYPE)
+    {
+        type1 = NUMTYPE;
+        val1 = node->rightchild->val;
+    }
+    else
+    {
+        type1 = VARTYPE;
+        oper1 = SearchInTable(block->table, block->table->capacity, node->rightchild->varvalue);
+    }
+
+    CurCmd.type = OP_EQ;
+    CurCmd.dest.type = VARTYPE;
+    CurCmd.dest.var = SearchInTable(block->table, block->table->capacity, node->leftchild->varvalue);
+
+    CurCmd.oper1.type = type1;
+    CurCmd.oper1.value = val1;
+    CurCmd.oper1.var = oper1;
+
+    block->size += 1;
+
+    return NULL;
+}
+
+void* VarToIR(Node* node, FuncIR* function, BlockIR* block)
+{
+    Variable* oper1 = NULL;
+    OPERTYPE type1 = NONE;
+    int val1 = 0;
+
+    if (node->rightchild->type == OP_TYPE)
+    {
+        type1 = VARTYPE;
+        oper1 = (Variable*) NodeToIR(node->rightchild, function, block);
+    }
+    else if (node->rightchild->type == NUM_TYPE)
+    {
+        type1 = NUMTYPE;
+        val1 = node->rightchild->val;
+    }
+    else
+    {
+        type1 = VARTYPE;
+        oper1 = SearchInTable(block->table, block->table->capacity, node->rightchild->varvalue);
+    }
+
+    CurCmd.type = OP_VAR;
+    CurCmd.dest.type = VARTYPE;
+    CurCmd.dest.var = SearchInTable(block->table, block->table->capacity, node->leftchild->varvalue);
+
+    CurCmd.oper1.type = type1;
+    CurCmd.oper1.value = val1;
+    CurCmd.oper1.var = oper1;
+
+    block->size += 1;
+
+    return NULL;
+}
+
+void* IfToIR(Node* node, FuncIR* function, BlockIR* block)
+{
+    Variable* oper1 = NULL;
+    OPERTYPE type1 = NONE;
+    int val1 = 0;
+
+    if (node->leftchild->type == OP_TYPE)
+    {
+        printf("IF OP\n");
+        type1 = VARTYPE;
+        oper1 = (Variable*) NodeToIR(node->leftchild, function, block);
+    }
+    else if (node->leftchild->type == NUM_TYPE)
+    {
+        type1 = NUMTYPE;
+        val1 = node->leftchild->val;
+    }
+    else
+    {
+        printf("IF VAR\n");
+        type1 = VARTYPE;
+        oper1 = SearchInTable(block->table, block->table->capacity, node->leftchild->varvalue);
+    }
+
+    CurCmd.type = OP_IF;
+
+    CurCmd.oper1.type = type1;
+    CurCmd.oper1.value = val1;
+    CurCmd.oper1.var = oper1;
+    block->size += 1;
+    function->curblock += 1;
+
+    BlockToIR(node->rightchild, function, &function->blocks[function->curblock]);
+
+    return NULL;
 }
 
 VarTable CreateVarTable(Node* node)
@@ -145,13 +336,13 @@ VarTable CreateVarTable(Node* node)
 
     int varnum = 0;
     CountVariables(node, &varnum);
-    vartable.size = varnum;
+    vartable.capacity = varnum;
 
     vartable.table = (Variable*) calloc(varnum, sizeof(Variable));
 
     varnum = 0;
     FillVarTable(node, &vartable, &varnum);
-    vartable.size = varnum;
+    vartable.capacity = varnum;
 
     return vartable;
 }
@@ -186,18 +377,12 @@ int FillVarTable(Node* node, VarTable* vartable, int* num)
         vartable->table[*num].offset = (*num + 1) * 8;
 
         *num += 1;
+        vartable->size += 1;
     }
-    if (node->type == OP_TYPE && node->optype <= OP_DIV)
-    {
-        char* name = (char*) calloc(VARSIZE, sizeof(char));
-        sprintf(name, "temp%d", *num);
 
-        vartable->table[*num].name = name;
-        vartable->table[*num].location = STACK;
-        vartable->table[*num].num = *num;
-        vartable->table[*num].offset = (*num + 1) * 8;
+    if (node->type == OP_TYPE && node->optype <= OP_DIV)
         *num += 1;
-    }
+
     if (node->leftchild)
         FillVarTable(node->leftchild, vartable, num);
     if (node->rightchild)
@@ -229,7 +414,7 @@ int DumpFunc(FuncIR* function)
         fprintf(fp, "Dumping Block%d\n", i);
         fprintf(fp, "-------------------------\n");
         DumpBlock(fp, &function->blocks[i]);
-        fprintf(fp, "-------------------------\n");
+        fprintf(fp, "-------------------------\n\n");
     }
 
     fclose(fp);
@@ -239,9 +424,9 @@ int DumpFunc(FuncIR* function)
 
 int DumpBlock(FILE* fp, BlockIR* block)
 {
-    fprintf(fp, "\tNumber of Commands: %d\n", block->numcommands);
-    fprintf(fp, "\tSize = %ld\n\n", block->size);
-    for (int i = 0; i < block->numcommands; i++)
+    fprintf(fp, "\tNumber of Commands: %d\n", block->capacity);
+    fprintf(fp, "\tSize = %d\n\n", block->size);
+    for (int i = 0; i < block->capacity; i++)
     {
         fprintf(fp, "\tDumping command%d\n", i);
         fprintf(fp, "\t---------------\n");
@@ -322,8 +507,8 @@ int DumpTable(FILE* fp, VarTable* table)
 {
     fprintf(fp, "Dumping VarTable\n");
     fprintf(fp, "-------------------------\n");
-    fprintf(fp, "VarTable size = %d\n", table->size);
-    for (int i = 0; i < table->size; i++)
+    fprintf(fp, "VarTable size = %d\n", table->capacity);
+    for (int i = 0; i < table->capacity; i++)
     {
         fprintf(fp, "Variable%d: name = %s, num = %d, location = ", i, table->table[i].name, table->table[i].num);
         PrintLocation(fp, table->table[i].location);
@@ -353,4 +538,3 @@ int PrintLocation(FILE* fp, Location loc)
 
     return NOERR;
 }
-
