@@ -58,6 +58,7 @@ struct IRCommand
 
 struct BlockIR
 {
+    char* name;
     IRCommand* commands;
     VarTable* table;
     int capacity;
@@ -70,10 +71,17 @@ struct FuncIR
     BlockIR* blocks;
     int blocksnum;
     int curblock;
+    char* name;
     size_t size;
 };
 
-FuncIR* TreeToIR(Tree* tree);
+struct IR
+{
+    FuncIR* functions;
+    int funcnum;
+};
+
+FuncIR* TreeToIR(Tree* tree, IR* ir);
 
 int CountFunctions(Tree* tree);
 
@@ -85,7 +93,7 @@ int FillVarTable(Node* node, VarTable* vartable, int* num);
 
 void* NodeToIR(Node* node,FuncIR* function,  BlockIR* block);
 
-int BlockToIR(Node* node, FuncIR* function, BlockIR* block);
+BlockIR* BlockToIR(Node* node, FuncIR* function, BlockIR* block);
 
 void* VarToIR(Node* node,FuncIR* function,  BlockIR* block);
 
@@ -97,11 +105,25 @@ void* EqToIR(Node* node, FuncIR* function, BlockIR* block);
 
 void* IfToIR(Node* node, FuncIR* function, BlockIR* block);
 
+void* ElseToIR(Node* node, FuncIR* function, BlockIR* block);
+
+void* CallToIR(Node* node, FuncIR* function, BlockIR* block);
+
+void* ParamToIR(Node* node, FuncIR* function, BlockIR* block);
+
+void* FunctionToIR(Node* node, FuncIR* function, BlockIR* block);
+
+void* RetToIR(Node* node, FuncIR* function, BlockIR* block);
+
+int AddOperator(Node* node, FuncIR* function, BlockIR* block, OperatorIR* oper);
+
 int CountBlocks(Node* node, int* num);
 
 int CountCommands(Node* node, int* num);
 
-int DumpFunc(FuncIR* function);
+int DumpIR(IR* ir);
+
+int DumpFunc(FILE* fp, FuncIR* function);
 
 int DumpTable(FILE* file, VarTable* table);
 

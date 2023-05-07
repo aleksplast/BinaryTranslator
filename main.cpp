@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 #include "frontend/frontend.h"
-#include "translator/translator.h"
+#include "backend/ir.h"
 #include "middleend/middleend.h"
 
 int main(int argc, char* argv[])
@@ -42,7 +42,12 @@ int main(int argc, char* argv[])
 
     CreateAncestor(tree.anchor, NULL, &tree);
 
-    TreeToIR(&tree);
+    IR ir = {};
+    TreeToIR(&tree, &ir);
+
+    printf("DONE IR\n");
+
+
 
     return 0;
 }

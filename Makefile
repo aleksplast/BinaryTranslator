@@ -1,9 +1,9 @@
 CC := g++ -Wno-pointer-arith -Wwrite-strings
 DIRFRONT := ../BinaryTranslator/frontend
-DIRBACK := ../BinaryTranslator/translator
+DIRBACK := ../BinaryTranslator/backend
 DIRMIDDLE := ../BinaryTranslator/middleend
 DIRFUNC := ../BinaryTranslator/functions
-SRC := main.cpp $(DIRFRONT)/frontend.cpp $(DIRFUNC)/text-sort.cpp $(DIRFUNC)/diftree.cpp $(DIRBACK)/translator.cpp $(DIRFUNC)/stack.cpp $(DIRMIDDLE)/middleend.cpp
+SRC := main.cpp $(DIRFRONT)/frontend.cpp $(DIRFUNC)/text-sort.cpp $(DIRFUNC)/diftree.cpp $(DIRBACK)/ir.cpp $(DIRFUNC)/stack.cpp $(DIRMIDDLE)/middleend.cpp
 DIRB := ../BinaryTranslator/lib
 DIRCPU := ../Processor
 DIRASM := ../Assembler
