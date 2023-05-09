@@ -1,5 +1,5 @@
-#ifndef TRANSLATOR_H
-#define TRANSLATOR_H
+#ifndef IR_H
+#define IR_H
 
 #include "../functions/Config.h"
 #include "../functions/text-sort.h"
@@ -143,4 +143,4 @@ VarTable CreateVarTable(Node* node);
 
 Variable* SearchInTable(VarTable* vartable, int num, char* input);
 
-#endif //BACKEND_H
+#endif //IR_H

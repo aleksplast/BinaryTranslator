@@ -14,6 +14,7 @@
 #pragma GCC diagnostic ignored "-Wswitch"
 
 #define CurCmd block->commands[block->size]
+#define NewCmd function->blocks[function->curblock].commands[function->blocks[function->curblock].size]
 #define PrevCmd (void*)&block->table->table[block->table->size - 1]
 
 static int ifcount = 0;
@@ -79,6 +80,14 @@ int FuncToIR(Node* node, FuncIR* function)
     function->blocks = (BlockIR*) calloc(function->blocksnum + 1, sizeof(BlockIR));
     function->curblock = 0;
 
+    for (int i = 0; i < function->blocksnum; i++)
+    {
+        char* blockname = (char*) calloc(VARSIZE, sizeof(char));
+        sprintf(blockname, "block%d", i);
+
+        function->blocks[i].name = blockname;
+    }
+
     BlockToIR(node, function, &function->blocks[0]);
 
     return NOERR;
@@ -124,13 +133,33 @@ BlockIR* BlockToIR(Node* node, FuncIR* function, BlockIR* block)
     int numcommands = 0;
     CountCommands(node, &numcommands);
 
-    char* blockname = (char*) calloc(VARSIZE, sizeof(char));
-    sprintf(blockname, "block%d", function->curblock);
+    if (node->ancestor)
+    {
+        if (node->ancestor->optype == OP_ELSE)
+        {
+            printf("NUMCOM += 1\n");
+            numcommands += 1;
+        }
+    }
 
-    block->name = blockname;
     block->capacity = numcommands;
+
     block->commands = (IRCommand*) calloc(numcommands, sizeof(IRCommand));
     block->table = &function->table;
+
+    if (node->ancestor)
+    {
+        if (node->ancestor->optype == OP_ELSE)
+        {
+            printf("HERE\n");
+            CurCmd.type = OP_ELSE;
+            CurCmd.oper1.type = BLOCKTYPE;
+            CurCmd.oper2.type = BLOCKTYPE;
+            CurCmd.oper1.block = block;
+            CurCmd.oper2.block = &function->blocks[function->curblock + 1];
+            block->size += 1;
+        }
+    }
 
     NodeToIR(node, function, block);
 
@@ -156,8 +185,10 @@ void* NodeToIR(Node* node, FuncIR* function, BlockIR* block)
         case OP_STAT:
             return StatementToIR(node, function, block);
         case OP_IF:
+            printf("IF\n");
             return IfToIR(node, function, block);
         case OP_ELSE:
+            printf("RIGHT HERE\n");
             return ElseToIR(node, function, block);
         case OP_CALL:
             return CallToIR(node, function, block);
@@ -423,7 +454,9 @@ void* ElseToIR(Node* node, FuncIR* function, BlockIR* block)
         function->curblock += 1;
     }
     if (node->rightchild)
+    {
         BlockToIR(node->rightchild, function, &function->blocks[function->curblock]);
+    }
 
     return NULL;
 }

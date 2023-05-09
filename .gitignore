@@ -9,3 +9,5 @@ main
 *.png
 *.txt
 lib
+*.asm
+asmfile

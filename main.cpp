@@ -4,6 +4,7 @@
 
 #include "frontend/frontend.h"
 #include "backend/ir.h"
+#include "backend/translator.h"
 #include "middleend/middleend.h"
 
 int main(int argc, char* argv[])
@@ -47,7 +48,7 @@ int main(int argc, char* argv[])
 
     printf("DONE IR\n");
 
-
+    TranslateIR(&ir);
 
     return 0;
 }
