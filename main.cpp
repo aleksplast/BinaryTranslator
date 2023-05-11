@@ -43,12 +43,17 @@ int main(int argc, char* argv[])
 
     CreateAncestor(tree.anchor, NULL, &tree);
 
+    printf("DONE TREE\n");
+
     IR ir = {};
     TreeToIR(&tree, &ir);
 
     printf("DONE IR\n");
 
-    TranslateIR(&ir);
+    BinTrans trans = {};
+    TranslateIR(&ir, &trans);
+
+    printf("DONE TRANS\n");
 
     return 0;
 }

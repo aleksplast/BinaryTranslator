@@ -13,12 +13,17 @@
 
 FILE* fp = fopen("asmfile.asm", "w");
 
-size_t align4096 = 4096;
-size_t buffersize = 4096;
+size_t ALIGN4096 = 4096;
+size_t BUFFERSIZE = 4096;
 
-int TranslateIR(IR* ir)
+int TranslateIR(IR* ir, BinTrans* trans)
 {
-    char* buffer = (char*) aligned_alloc(align4096, buffersize);
+    trans->membuff = (char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
+    trans->labelstable.capacity = CountLabels(ir);
+    trans->labelstable.size = 0;
+    trans->labelstable.labels = (Label*) calloc(trans->labelstable.capacity, sizeof(Label));
+    trans->exebuff = (char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
+
     DBG fprintf(fp, "section .text\n");
     DBG fprintf(fp, "global main\n");
 
@@ -38,7 +43,7 @@ int TranslateIR(IR* ir)
 
     for(int i = 0; i < ir->funcnum; i++)
     {
-        TranslateFunc(&ir->functions[i]);
+        TranslateFunc(&ir->functions[i], trans);
     }
 
     DBG fprintf(fp, "section .data\n"
@@ -53,14 +58,14 @@ int TranslateIR(IR* ir)
     return NOERR;
 }
 
-int TranslateFunc(FuncIR* function)
+int TranslateFunc(FuncIR* function, BinTrans* trans)
 {
     if (strcmp(function->name, "main") != 0)
-        fprintf(fp, "%s\n", function->name);
-    EnlargeR11(function);
+        DBG fprintf(fp, "%s\n", function->name);
+    EnlargeR11(function, trans);
     for (int i = 0; i < function->blocksnum; i++)
     {
-        TranslateBlock(function, &function->blocks[i]);
+        TranslateBlock(function, &function->blocks[i], trans);
     }
     if (strcmp(function->name, "main") == 0)
     {
@@ -72,7 +77,7 @@ int TranslateFunc(FuncIR* function)
     return NOERR;
 }
 
-int TranslateBlock(FuncIR* function, BlockIR* block)
+int TranslateBlock(FuncIR* function, BlockIR* block, BinTrans* trans)
 {
     if (block->size == 0)
     {
@@ -90,58 +95,58 @@ int TranslateBlock(FuncIR* function, BlockIR* block)
 
     for (int i = 0; i < block->size; i++)
     {
-        TranslateCommand(function, block, &block->commands[i]);
+        TranslateCommand(function, block, &block->commands[i], trans);
     }
 
     return NOERR;
 }
 
-int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     switch (cmd->type)
     {
         case OP_VAR:
-            TranslateVar(function, block, cmd);
+            TranslateVar(function, block, cmd, trans);
             break;
         case OP_EQ:
-            TranslateEq(function, block, cmd);
+            TranslateEq(function, block, cmd, trans);
             break;
         case OP_ADD:
-            TranslateArithOper(function, block, cmd);
+            TranslateArithOper(function, block, cmd, trans);
             break;
         case OP_SUB:
-            TranslateArithOper(function, block, cmd);
+            TranslateArithOper(function, block, cmd, trans);
             break;
         case OP_MUL:
-            TranslateArithOper(function, block, cmd);
+            TranslateArithOper(function, block, cmd, trans);
             break;
         case OP_DIV:
-            TranslateArithOper(function, block, cmd);
+            TranslateArithOper(function, block, cmd, trans);
             break;
         case OP_CALL:
-            TranslateCall(function, block, cmd);
+            TranslateCall(function, block, cmd, trans);
             break;
         case OP_RET:
-            TranslateRet(function, block, cmd);
+            TranslateRet(function, block, cmd, trans);
             break;
         case OP_IF:
-            TranslateIf(function, block, cmd);
+            TranslateIf(function, block, cmd, trans);
             break;
         case OP_PARAMIN:
-            TranslateParamIn(function, block, cmd);
+            TranslateParamIn(function, block, cmd, trans);
             break;
         case OP_PARAMOUT:
-            TranslateParamOut(function, block, cmd);
+            TranslateParamOut(function, block, cmd, trans);
             break;
         case OP_PARAMS:
-            TranslateParamS(function, block, cmd);
+            TranslateParamS(function, block, cmd, trans);
             break;
     }
 
     return NOERR;
 }
 
-int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     switch(cmd->oper1.type)
     {
@@ -157,7 +162,7 @@ int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     switch(cmd->oper1.type)
     {
@@ -174,7 +179,7 @@ int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     switch(cmd->oper1.type)
     {
@@ -217,12 +222,12 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     if (strcmp(cmd->oper1.var->name, "zhmurik") == 0)
-        TranslatePrintf(function, block, cmd);
+        TranslatePrintf(function, block, cmd, trans);
     else if (strcmp(cmd->oper1.var->name, "topdek") == 0)
-        TranslateScanf(function, block, cmd);
+        TranslateScanf(function, block, cmd, trans);
     else
     {
         DBG fprintf(fp, "call %s\n", cmd->oper1.var->name);
@@ -233,7 +238,7 @@ int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
 
     switch(cmd->dest.type)
@@ -246,13 +251,13 @@ int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd)
            break;
     }
 
-    ReduceR11(function);
+    ReduceR11(function, trans);
     DBG fprintf(fp, "ret\n");
 
     return NOERR;
 }
 
-int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     switch(cmd->dest.type)
     {
@@ -270,7 +275,7 @@ int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "pop rax\n");
     DBG fprintf(fp, "push r11\n");
@@ -286,7 +291,7 @@ int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "pop rax\n");
     DBG fprintf(fp, "push r11\n");
@@ -302,7 +307,7 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->dest.var->offset);
     DBG fprintf(fp, "push rax\n");
@@ -310,7 +315,7 @@ int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "pop rbx\n");
     DBG fprintf(fp, "pop rax\n");
@@ -320,7 +325,7 @@ int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd)
+int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "mov rax, r11\n");
     DBG fprintf(fp, "add rax, %d\n", cmd->dest.var->offset);
@@ -329,14 +334,14 @@ int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd)
     return NOERR;
 }
 
-int EnlargeR11(FuncIR* function)
+int EnlargeR11(FuncIR* function, BinTrans* trans)
 {
     DBG fprintf(fp, "add r11, %d\n", function->table.capacity * 8);
 
     return NOERR;
 }
 
-int ReduceR11(FuncIR* function)
+int ReduceR11(FuncIR* function, BinTrans* trans)
 {
     DBG fprintf(fp, "sub r11, %d\n", function->table.capacity * 8);
 
@@ -349,4 +354,18 @@ int ExternFunctions()
     DBG fprintf(fp, "extern printf\n");
 
     return NOERR;
+}
+
+int CountLabels(IR* ir)
+{
+    int labels = 0;
+
+    labels += ir->funcnum;
+
+    for (int i = 0; i < ir->funcnum; i++)
+    {
+        labels += ir->functions[i].blocksnum;
+    }
+
+    return labels;
 }

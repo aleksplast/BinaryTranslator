@@ -1,40 +1,70 @@
 #ifndef TRANSLATOR_H
 #define TRANSLATOR_H
 
-int TranslateIR(IR* ir);
+#include "opcodes.h"
 
-int TranslateFunc(FuncIR* function);
+struct Operation
+{
 
-int TranslateBlock(FuncIR* function, BlockIR* block);
+}
 
-int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd);
+struct Label
+{
+    char* name;
+    int offset;
+};
 
-int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd);
+struct LabelsTable
+{
+    Label* labels;
+    int capacity;
+    int size;
+};
 
-int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd);
+struct BinTrans
+{
+    char* membuff;
+    char* exebuff;
+    int len;
+    LabelsTable labelstable;
+};
 
-int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateIR(IR* ir, BinTrans* trans);
 
-int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateFunc(FuncIR* function, BinTrans* trans);
 
-int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateBlock(FuncIR* function, BlockIR* block, BinTrans* trans);
 
-int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
 
-int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
 
-int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
 
-int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
 
-int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
 
-int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd);
+int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
+
+int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
+
+int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
+
+int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
+
+int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
+
+int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
+
+int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans);
 
 int ExternFunctions();
 
-int EnlargeR11(FuncIR* function);
+int EnlargeR11(FuncIR* function, BinTrans* trans);
 
-int ReduceR11(FuncIR* function);
+int ReduceR11(FuncIR* function, BinTrans* trans);
+
+int CountLabels(IR* ir);
 
 #endif // TRANSLATOR_H
