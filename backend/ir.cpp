@@ -514,7 +514,12 @@ void* ParamToIR(Node* node, FuncIR* function, BlockIR* block)
         oper1 = SearchInTable(block->table, block->table->capacity, node->leftchild->varvalue);
     }
 
-    CurCmd.type = OP_PARAM;
+    if (node->leftchild->optype == OP_VAR)
+        CurCmd.type = OP_PARAMOUT;
+    else if (strcmp(node->ancestor->varvalue, "topdek") == 0)
+        CurCmd.type = OP_PARAMS;
+    else
+        CurCmd.type = OP_PARAMIN;
 
     CurCmd.dest.type = type1;
     CurCmd.dest.value = val1;

@@ -19,8 +19,8 @@ main: $(SRC)
 	$(CC) $^ -o $@
 
 asm:
-	sudo $(NASM) $(SRCASM).lst $(SRCASM).asm
-	sudo $(LD) $(SRCASM) $(SRCASM).o
+	sudo nasm -f elf64 -o asmfile.o asmfile.asm
+	sudo gcc -no-pie -o asmfile asmfile.o
 
 clean:
 	rm -rf *.png *.dot *.o
