@@ -1,12 +1,14 @@
 #ifndef TRANSLATOR_H
 #define TRANSLATOR_H
+#include <cstdint>
 
 #include "opcodes.h"
 
 struct Operation
 {
-
-}
+    enum OPCODES opcode;
+    enum OPCODES_SIZES size;
+};
 
 struct Label
 {
@@ -23,8 +25,8 @@ struct LabelsTable
 
 struct BinTrans
 {
-    char* membuff;
-    char* exebuff;
+    unsigned char* membuff;
+    unsigned char* exebuff;
     int len;
     LabelsTable labelstable;
 };
@@ -66,5 +68,13 @@ int EnlargeR11(FuncIR* function, BinTrans* trans);
 int ReduceR11(FuncIR* function, BinTrans* trans);
 
 int CountLabels(IR* ir);
+
+int WriteBinCmd(BinTrans* trans, Operation* oper);
+
+int WriteAbsPtr(BinTrans* trans, uint64_t ptr);
+
+int WriteNum(BinTrans* trans, int num);
+
+int DumpBuffer(BinTrans* trans);
 
 #endif // TRANSLATOR_H

@@ -6,23 +6,27 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctype.h>
+#include <cstdint>
 
 #include "common.h"
 #include "ir.h"
 #include "translator.h"
+#include "dsl.h"
 
 FILE* fp = fopen("asmfile.asm", "w");
+FILE* dump = fopen("dump.txt", "w");
 
 size_t ALIGN4096 = 4096;
 size_t BUFFERSIZE = 4096;
 
 int TranslateIR(IR* ir, BinTrans* trans)
 {
-    trans->membuff = (char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
+    trans->membuff = (unsigned char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
     trans->labelstable.capacity = CountLabels(ir);
     trans->labelstable.size = 0;
     trans->labelstable.labels = (Label*) calloc(trans->labelstable.capacity, sizeof(Label));
-    trans->exebuff = (char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
+    trans->exebuff = (unsigned char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
+
 
     DBG fprintf(fp, "section .text\n");
     DBG fprintf(fp, "global main\n");
@@ -30,7 +34,12 @@ int TranslateIR(IR* ir, BinTrans* trans)
     DBG ExternFunctions();
 
     DBG fprintf(fp, "main:\n");
+
     DBG fprintf(fp, "mov r11, Buffer\n");
+
+    Operation movr11 = {MOV_R11_NUM, SIZE_MOV_R11_NUM};
+    WriteBinCmd(trans, &movr11);
+    WriteAbsPtr(trans, (uint64_t) trans->membuff);
 
     DBG fprintf(fp, "push r11\n");
     DBG fprintf(fp, "push rbp\n");
@@ -50,9 +59,10 @@ int TranslateIR(IR* ir, BinTrans* trans)
 
                 "Buffer: times 4096 db 0x00\n");
     DBG fprintf(fp, "formatin: db \"%%d\", 0x00\n");
-    DBG fprintf(fp, "formatout: db \"%%d\", 0x00\n");
+    DBG fprintf(fp, "formatout: db \"%%d\", 0x0a, 0x00\n");
     DBG fprintf(fp, "Message: db \"HelloWorld!\", 0x0a, 0x00");
 
+    DumpBuffer(trans);
 
     fclose(fp);
     return NOERR;
@@ -61,7 +71,9 @@ int TranslateIR(IR* ir, BinTrans* trans)
 int TranslateFunc(FuncIR* function, BinTrans* trans)
 {
     if (strcmp(function->name, "main") != 0)
+    {
         DBG fprintf(fp, "%s\n", function->name);
+    }
     EnlargeR11(function, trans);
     for (int i = 0; i < function->blocksnum; i++)
     {
@@ -81,12 +93,15 @@ int TranslateBlock(FuncIR* function, BlockIR* block, BinTrans* trans)
 {
     if (block->size == 0)
     {
-        DBG fprintf(fp, ".%s\n", block->name);
+        printf("HERE\n");
+        fprintf(fp, ".%s\n", block->name);
         return NOERR;
     }
 
     if (block->commands[0].type != OP_ELSE)
+    {
         DBG fprintf(fp, ".%s\n", block->name);
+    }
     else
     {
         DBG fprintf(fp, "jmp .%s\n", block->commands[0].oper2.block->name);
@@ -142,6 +157,7 @@ int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans*
             TranslateParamS(function, block, cmd, trans);
             break;
     }
+    DumpBuffer(trans);
 
     return NOERR;
 }
@@ -151,13 +167,37 @@ int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tra
     switch(cmd->oper1.type)
     {
         case NUMTYPE:
+        {
             DBG fprintf(fp, "mov rax, %d\n", cmd->oper1.value);
+
+            Operation movrax = {MOV_RAX_NUM, SIZE_MOV_RAX_NUM};
+            WriteBinCmd(trans, &movrax);
+            WriteNum(trans, cmd->oper1.value);
+
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
         case VARTYPE:
+        {
             DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->oper1.var->offset);
+
+            Operation movraxr11 = {MOV_RAX_MEM_R11, SIZE_MOV_RAX_MEM_R11};
+            WriteBinCmd(trans, &movraxr11);
+            WriteNum(trans, cmd->dest.var->offset);
+
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
     }
     return NOERR;
 }
@@ -167,13 +207,37 @@ int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tran
     switch(cmd->oper1.type)
     {
         case NUMTYPE:
+        {
             DBG fprintf(fp, "mov rax, %d\n", cmd->oper1.value);
+
+            Operation movrax = {MOV_RAX_NUM, SIZE_MOV_RAX_NUM};
+            WriteBinCmd(trans, &movrax);
+            WriteNum(trans, cmd->oper1.value);
+
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
         case VARTYPE:
+        {
             DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->oper1.var->offset);
+
+            Operation movraxr11 = {MOV_RAX_MEM_R11, SIZE_MOV_RAX_MEM_R11};
+            WriteBinCmd(trans, &movraxr11);
+            WriteNum(trans, cmd->dest.var->offset);
+
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
     }
 
     return NOERR;
@@ -184,11 +248,25 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
     switch(cmd->oper1.type)
     {
         case NUMTYPE:
+        {
             DBG fprintf(fp, "mov rax, %d\n", cmd->oper1.value);
+
+            Operation movrax = {MOV_RAX_NUM, SIZE_MOV_RAX_NUM};
+            WriteBinCmd(trans, &movrax);
+            WriteNum(trans, cmd->oper1.value);
+
             break;
+        }
         case VARTYPE:
+        {
             DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->oper1.var->offset);
+
+            Operation movraxr11 = {MOV_RAX_MEM_R11, SIZE_MOV_RAX_MEM_R11};
+            WriteBinCmd(trans, &movraxr11);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
     }
     switch(cmd->oper2.type)
     {
@@ -203,21 +281,49 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
     switch (cmd->type)
     {
         case OP_ADD:
+        {
             DBG fprintf(fp, "add rax, rbx\n");
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
         case OP_SUB:
+        {
             DBG fprintf(fp, "sub rax, rbx\n");
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
         case OP_MUL:
+        {
             DBG fprintf(fp, "mul rbx\n");
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
         case OP_DIV:
+        {
             DBG fprintf(fp, "div rbx\n");
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+            Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+            WriteBinCmd(trans, &movr11rax);
+            WriteNum(trans, cmd->dest.var->offset);
+
             break;
+        }
     }
     return NOERR;
 }
@@ -235,6 +341,11 @@ int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tr
 
     DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
 
+    Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+    WriteBinCmd(trans, &movr11rax);
+    WriteNum(trans, cmd->dest.var->offset);
+
+
     return NOERR;
 }
 
@@ -244,11 +355,25 @@ int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tra
     switch(cmd->dest.type)
     {
         case NUMTYPE:
-           DBG fprintf(fp, "mov rax, %d\n", cmd->dest.value);
-           break;
+        {
+            DBG fprintf(fp, "mov rax, %d\n", cmd->dest.value);
+
+            Operation movrax = {MOV_RAX_NUM, SIZE_MOV_RAX_NUM};
+            WriteBinCmd(trans, &movrax);
+            WriteNum(trans, cmd->oper1.value);
+
+            break;
+        }
         case VARTYPE:
-           DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->dest.var->offset);
-           break;
+        {
+            DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->dest.var->offset);
+
+            Operation movraxr11 = {MOV_RAX_MEM_R11, SIZE_MOV_RAX_MEM_R11};
+            WriteBinCmd(trans, &movraxr11);
+            WriteNum(trans, cmd->dest.var->offset);
+
+            break;
+        }
     }
 
     ReduceR11(function, trans);
@@ -310,6 +435,11 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* t
 int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->dest.var->offset);
+
+    Operation movraxr11 = {MOV_RAX_MEM_R11, SIZE_MOV_RAX_MEM_R11};
+    WriteBinCmd(trans, &movraxr11);
+    WriteNum(trans, cmd->dest.var->offset);
+
     DBG fprintf(fp, "push rax\n");
 
     return NOERR;
@@ -318,9 +448,22 @@ int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans*
 int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "pop rbx\n");
+
+    WritePopReg(RBX);
+
     DBG fprintf(fp, "pop rax\n");
+
+    WritePopReg(RAX);
+
     DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
+
+    Operation movr11rax = {MOV_MEM_R11_RAX, SIZE_MOV_MEM_R11_RAX};
+    WriteBinCmd(trans, &movr11rax);
+    WriteNum(trans, cmd->dest.var->offset);
+
     DBG fprintf(fp,  "push rbx\n");
+
+    WritePushReg(RBX);
 
     return NOERR;
 }
@@ -328,8 +471,19 @@ int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans
 int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
     DBG fprintf(fp, "mov rax, r11\n");
+
+    Operation movraxr11 = {MOV_RAX_R11, SIZE_MOV_RAX_R11};
+    WriteBinCmd(trans, &movraxr11);
+
     DBG fprintf(fp, "add rax, %d\n", cmd->dest.var->offset);
+
+    Operation addraxnum = {ADD_RAX_NUM, SIZE_ADD_RAX_NUM};
+    WriteBinCmd(trans, &addraxnum);
+    WriteNum(trans, cmd->dest.var->offset);
+
     DBG fprintf(fp, "push rax\n");
+
+    WritePushReg(RAX);
 
     return NOERR;
 }
@@ -338,12 +492,20 @@ int EnlargeR11(FuncIR* function, BinTrans* trans)
 {
     DBG fprintf(fp, "add r11, %d\n", function->table.capacity * 8);
 
+    Operation addr11num = {ADD_R11_NUM, SIZE_ADD_R11_NUM};
+    WriteBinCmd(trans, &addr11num);
+    WriteNum(trans, function->table.capacity * 8);
+
     return NOERR;
 }
 
 int ReduceR11(FuncIR* function, BinTrans* trans)
 {
     DBG fprintf(fp, "sub r11, %d\n", function->table.capacity * 8);
+
+    Operation subr11num = {SUB_R11_NUM, SIZE_SUB_R11_NUM};
+    WriteBinCmd(trans, &subr11num);
+    WriteNum(trans, function->table.capacity * 8);
 
     return NOERR;
 }
@@ -368,4 +530,39 @@ int CountLabels(IR* ir)
     }
 
     return labels;
+}
+
+int WriteBinCmd(BinTrans* trans, Operation* oper)
+{
+    *(unsigned int*)(trans->exebuff + trans->len) = oper->opcode;
+    trans->len += oper->size;
+
+    return NOERR;
+}
+
+int WriteAbsPtr(BinTrans* trans, uint64_t ptr)
+{
+    *(uint64_t*) (trans->exebuff + trans->len) = ptr;
+    trans->len += sizeof(uint64_t);
+
+    return NOERR;
+}
+
+int WriteNum(BinTrans* trans, int num)
+{
+    *(int*) (trans->exebuff + trans->len) = num;
+    trans->len += sizeof(int);
+
+    return NOERR;
+}
+
+int DumpBuffer(BinTrans* trans)
+{
+    for (int i = 0; i < trans->len; i++)
+    {
+        fprintf(dump, "%02x", trans->exebuff[i]);
+    }
+    fprintf(dump, "\n");
+
+    return NOERR;
 }

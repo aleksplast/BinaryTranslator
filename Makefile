@@ -22,5 +22,8 @@ asm:
 	sudo nasm -f elf64 -o asmfile.o asmfile.asm
 	sudo gcc -no-pie -o asmfile asmfile.o
 
+cmd:
+	sudo $(NASM) commands.lst commands.asm
+	sudo $(LD) commands commands.o
 clean:
 	rm -rf *.png *.dot *.o
