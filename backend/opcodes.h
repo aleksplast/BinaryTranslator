@@ -30,7 +30,7 @@ enum OPCODES
     PUSH_RAX = 0x50,
     POP_RBX = 0x5B,
     PUSH_RBX = 0x53,
-    ADD_RAX_NUM = 0x0205,
+    ADD_RAX_NUM = 0x0548,
     MOV_RAX_R11 = 0xD8894c,
     ADD_R11_NUM = 0xC38149,
     SUB_R11_NUM = 0xEB8149,
