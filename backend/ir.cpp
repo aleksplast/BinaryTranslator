@@ -137,7 +137,6 @@ BlockIR* BlockToIR(Node* node, FuncIR* function, BlockIR* block)
     {
         if (node->ancestor->optype == OP_ELSE)
         {
-            printf("NUMCOM += 1\n");
             numcommands += 1;
         }
     }
@@ -151,7 +150,6 @@ BlockIR* BlockToIR(Node* node, FuncIR* function, BlockIR* block)
     {
         if (node->ancestor->optype == OP_ELSE)
         {
-            printf("HERE\n");
             CurCmd.type = OP_ELSE;
             CurCmd.oper1.type = BLOCKTYPE;
             CurCmd.oper2.type = BLOCKTYPE;
@@ -185,10 +183,8 @@ void* NodeToIR(Node* node, FuncIR* function, BlockIR* block)
         case OP_STAT:
             return StatementToIR(node, function, block);
         case OP_IF:
-            printf("IF\n");
             return IfToIR(node, function, block);
         case OP_ELSE:
-            printf("RIGHT HERE\n");
             return ElseToIR(node, function, block);
         case OP_CALL:
             return CallToIR(node, function, block);

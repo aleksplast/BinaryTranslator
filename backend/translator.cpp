@@ -30,10 +30,10 @@ int BinTransCtor(IR* ir, BinTrans* trans)
 
     trans->labelstable.capacity = CountLabels(ir);
     trans->labelstable.size = 0;
-    trans->labelstable.labels = (Label*) calloc(trans->labelstable.capacity, sizeof(Label));
+    trans->labelstable.labels = (Label*) calloc(trans->labelstable.capacity + 1, sizeof(Label));
 
-    trans->formatout = (char*) calloc(STRSIZE, sizeof(char));
-    trans->formatin = (char*) calloc(STRSIZE, sizeof(char));
+    trans->formatout = (char*) calloc(STRSIZE + 1, sizeof(char));
+    trans->formatin = (char*) calloc(STRSIZE + 1, sizeof(char));
     sprintf(trans->formatout, "\"%%d\"\n");
     sprintf(trans->formatin, "\"%%d\"");
 
@@ -429,21 +429,22 @@ int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* 
     WritePushReg(RSP);
 
     DBG fprintf(fp, "mov rdi, formatout\n");
-    Operation movrdi = {MOV_RDI_NUM, SIZE_MOV_RDI_NUM};
-    WriteBinCmd(trans, &movrdi);
-    WriteAbsPtr(trans, (uint64_t)trans->formatout);
+    // Operation movrdi = {MOV_RDI_NUM, SIZE_MOV_RDI_NUM};
+    // WriteBinCmd(trans, &movrdi);
+    // WriteAbsPtr(trans, (uint64_t)trans->formatout);
 
     DBG fprintf(fp, "mov rsi, rax\n");
-    Operation movrsirax = {MOV_RSI_RAX, SIZE_MOV_RSI_RAX};
-    WriteBinCmd(trans, &movrsirax);
+    Operation movrdirax = {MOV_RDI_RAX, SIZE_MOV_RDI_RAX};
+    WriteBinCmd(trans, &movrdirax);
 
 
 
     DBG fprintf(fp, "call printf\n");
     Operation call = {CALL, SIZE_CALL};
-    WriteBinCmd{trans, &call};
+    WriteBinCmd(trans, &call);
 
-    uint32_t printptr = (uint64_t)Printf()
+    uint32_t printptr = (uint64_t)Print - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
+    WriteNum(trans, printptr);
 
 
     DBG fprintf(fp, "pop rsp\n");
@@ -473,16 +474,20 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* t
     WritePushReg(RSP);
 
     DBG fprintf(fp, "mov rdi, formatin\n");
-    Operation movrdi = {MOV_RDI_NUM, SIZE_MOV_RDI_NUM};
-    WriteBinCmd(trans, &movrdi);
-    WriteAbsPtr(trans, (uint64_t)trans->formatout);
+    // Operation movrdi = {MOV_RDI_NUM, SIZE_MOV_RDI_NUM};
+    // WriteBinCmd(trans, &movrdi);
+    // WriteAbsPtr(trans, (uint64_t)trans->formatout);
 
     DBG fprintf(fp, "mov rsi, rax\n");
-    Operation movrsirax = {MOV_RSI_RAX, SIZE_MOV_RSI_RAX};
-    WriteBinCmd(trans, &movrsirax);
+    Operation movrdirax = {MOV_RDI_RAX, SIZE_MOV_RDI_RAX};
+    WriteBinCmd(trans, &movrdirax);
 
     DBG fprintf(fp, "call scanf\n");
+    Operation call = {CALL, SIZE_CALL};
+    WriteBinCmd(trans, &call);
 
+    uint32_t scanfptr = (uint64_t)Scanf - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
+    WriteNum(trans, scanfptr);
 
     DBG fprintf(fp, "pop rsp\n");
     WritePopReg(RSP);
@@ -612,8 +617,6 @@ int WriteCall(BinTrans* trans, char* func)
 
     int ip = FindLabel(trans, func, INITIAL);
 
-    printf("CALL IP = %d\n", ip);
-
     WriteNum(trans, ip - sizeof(int) - trans->len);
 
     return NOERR;
@@ -625,7 +628,6 @@ int WriteUnCndJump(BinTrans* trans, char* func, char* block)
     WriteBinCmd(trans, &jmp);
 
     int ip = FindLabel(trans, func, block);
-    printf("JUMP IP = %d\n", ip);
 
     WriteNum(trans, ip - sizeof(int) - trans->len);
 
@@ -672,6 +674,13 @@ int AddLabel(BinTrans* trans, char* func, char* block)
     return NOERR;
 }
 
+int Print(int num)
+{
+    printf("%d\n", num);
+
+    return NOERR;
+}
+
 int DumpBuffer(BinTrans* trans)
 {
     for (int i = 0; i < trans->len; i++)
@@ -679,6 +688,14 @@ int DumpBuffer(BinTrans* trans)
         fprintf(dump, "%02x", trans->exebuff[i]);
     }
     fprintf(dump, "\n");
+
+    return NOERR;
+}
+
+int Scanf(int* num)
+{
+    int gay = 0;
+    scanf("%d", num);
 
     return NOERR;
 }

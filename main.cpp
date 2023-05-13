@@ -6,6 +6,9 @@
 #include "backend/ir.h"
 #include "backend/translator.h"
 #include "middleend/middleend.h"
+#include "sys/mman.h"
+
+int inline RunCode(unsigned char* buff);
 
 int main(int argc, char* argv[])
 {
@@ -56,7 +59,20 @@ int main(int argc, char* argv[])
     printf("FIRST TRANS DONE\n");
     TranslateIR(&ir, &trans);
 
+    mprotect(trans.exebuff, trans.len + 1, PROT_EXEC);
     printf("DONE TRANS\n");
+    printf("---------EXECUTING---------\n");
+
+    RunCode(trans.exebuff);
+
+    return 0;
+}
+
+int inline RunCode(unsigned char* buff)
+{
+    void (*func) (void) = (void (*)(void))(buff);
+
+    func();
 
     return 0;
 }

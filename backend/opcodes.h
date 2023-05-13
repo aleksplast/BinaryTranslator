@@ -36,6 +36,7 @@ enum OPCODES
     ADD_R11_NUM = 0xC38149,
     SUB_R11_NUM = 0xEB8149,
     SYSCALL = 0x050f,
+    MOV_RDI_RAX = 0xC78948,
 };
 
 enum OPCODES_SIZES
@@ -73,6 +74,7 @@ enum OPCODES_SIZES
     SIZE_ADD_R11_NUM = 3,
     SIZE_SUB_R11_NUM = 3,
     SIZE_SYSCALL = 2,
+    SIZE_MOV_RDI_RAX = 3,
 };
 
 #endif //OPCODES_H

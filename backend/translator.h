@@ -93,4 +93,8 @@ int FindLabel(BinTrans* trans, char* func, char* block);
 
 int DumpBuffer(BinTrans* trans);
 
+int Print(int num);
+
+int Scanf(int* num);
+
 #endif // TRANSLATOR_H
