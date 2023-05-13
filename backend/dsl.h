@@ -22,6 +22,8 @@
                                             WriteBinCmd(trans, &mov##reg##r11);                                 \
                                             WriteNum(trans, num);
 
-#define WriteAddRegNum
+#define WriteAddRegNum(reg, num)            Operation add##reg = {ADD_##reg##_NUM, SIZE_ADD_##reg##_NUM};      \
+                                            WriteBinCmd(trans, &add##reg);                                     \
+                                            WriteNum(trans, num);
 
 #endif // DSL_H

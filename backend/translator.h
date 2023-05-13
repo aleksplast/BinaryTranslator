@@ -29,6 +29,9 @@ struct BinTrans
     unsigned char* exebuff;
     int len;
     LabelsTable labelstable;
+
+    char* formatout;
+    char* formatin;
 };
 
 int TranslateIR(IR* ir, BinTrans* trans);
