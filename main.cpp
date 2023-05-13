@@ -51,6 +51,9 @@ int main(int argc, char* argv[])
     printf("DONE IR\n");
 
     BinTrans trans = {};
+    BinTransCtor(&ir, &trans);
+    TranslateIR(&ir, &trans);
+    printf("FIRST TRANS DONE\n");
     TranslateIR(&ir, &trans);
 
     printf("DONE TRANS\n");

@@ -12,8 +12,9 @@ struct Operation
 
 struct Label
 {
-    char* name;
-    int offset;
+    char* func;
+    char* block;
+    int ip;
 };
 
 struct LabelsTable
@@ -77,6 +78,18 @@ int WriteBinCmd(BinTrans* trans, Operation* oper);
 int WriteAbsPtr(BinTrans* trans, uint64_t ptr);
 
 int WriteNum(BinTrans* trans, int num);
+
+int WriteUnCndJump(BinTrans* trans, char* func, char* block);
+
+int WriteCndJump(BinTrans* trans, char* func, char* block);
+
+int AddLabel(BinTrans* trans, char* func, char* block);
+
+int BinTransCtor(IR* ir, BinTrans* trans);
+
+int WriteCall(BinTrans* trans, char* func);
+
+int FindLabel(BinTrans* trans, char* func, char* block);
 
 int DumpBuffer(BinTrans* trans);
 
