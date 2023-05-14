@@ -16,3 +16,4 @@ asm
 cpu
 backend.cpp
 backend.h
+test
