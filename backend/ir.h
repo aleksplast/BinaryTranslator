@@ -143,4 +143,12 @@ VarTable CreateVarTable(Node* node);
 
 Variable* SearchInTable(VarTable* vartable, int num, char* input);
 
+int IrDtor(IR* ir);
+
+int FuncDtor(FuncIR* func);
+
+int BlockDtor(BlockIR* block);
+
+int TableDtor(VarTable* table);
+
 #endif //IR_H

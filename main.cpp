@@ -5,6 +5,7 @@
 #include "frontend/frontend.h"
 #include "backend/ir.h"
 #include "backend/translator.h"
+#include "backend/backend.h"
 #include "middleend/middleend.h"
 #include "sys/mman.h"
 
@@ -19,6 +20,8 @@ int main(int argc, char* argv[])
 
     setlocale(LC_ALL, "Rus");
     Source datasrc = InputHandler(input);
+
+    FILE* asmprog = fopen("asmprog.txt", "w");
 
     Tree tree = {};
     char log[STRSIZE] = "./lib/graphlog.htm";
@@ -46,24 +49,26 @@ int main(int argc, char* argv[])
 
     CreateAncestor(tree.anchor, NULL, &tree);
 
-    printf("DONE TREE\n");
+    CreateAsmProgramm(tree.anchor, asmprog);
 
     IR ir = {};
     TreeToIR(&tree, &ir);
 
-    printf("DONE IR\n");
-
     BinTrans trans = {};
     BinTransCtor(&ir, &trans);
     TranslateIR(&ir, &trans);
-    printf("FIRST TRANS DONE\n");
+
     TranslateIR(&ir, &trans);
 
     mprotect(trans.exebuff, trans.len + 1, PROT_EXEC);
-    printf("DONE TRANS\n");
-    printf("---------EXECUTING---------\n");
 
     RunCode(trans.exebuff);
+    fflush(stdin);
+
+    mprotect(trans.exebuff, trans.len + 1, PROT_WRITE);
+    BinTransDtor(&trans);
+    IrDtor(&ir);
+
 
     return 0;
 }

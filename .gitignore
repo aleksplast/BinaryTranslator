@@ -12,3 +12,7 @@ lib
 *.asm
 asmfile
 commands
+asm
+cpu
+backend.cpp
+backend.h

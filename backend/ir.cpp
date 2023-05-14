@@ -150,6 +150,7 @@ BlockIR* BlockToIR(Node* node, FuncIR* function, BlockIR* block)
     {
         if (node->ancestor->optype == OP_ELSE)
         {
+
             CurCmd.type = OP_ELSE;
             CurCmd.oper1.type = BLOCKTYPE;
             CurCmd.oper2.type = BLOCKTYPE;
@@ -752,4 +753,70 @@ int PrintLocation(FILE* fp, Location loc)
     }
 
     return NOERR;
+}
+
+int IrDtor(IR* ir)
+{
+    for (int i = 0; i < ir->funcnum; i++)
+    {
+        FuncDtor(&ir->functions[i]);
+    }
+
+    free(ir->functions);
+    ir->functions = NULL;
+    ir->funcnum = -1;
+
+    return NOERR;
+}
+
+int FuncDtor(FuncIR* func)
+{
+    for (int i = 0; i < func->blocksnum; i++)
+    {
+        BlockDtor(&func->blocks[i]);
+    }
+
+    TableDtor(&func->table);
+    free(func->name);
+    func->name = NULL;
+
+    func->blocksnum = -1;
+    func->curblock = -1;
+    func->size = -1;
+
+    free(func->blocks);
+    func->blocks = NULL;
+
+    return NOERR;
+}
+
+int BlockDtor(BlockIR* block)
+{
+    free(block->commands);
+    block->commands = NULL;
+
+    block->capacity = -1;
+    block->size = -1;
+
+    free(block->name);
+    block->name = NULL;
+
+    return NOERR;
+}
+
+int TableDtor(VarTable* table)
+{
+    for (int i = 0; i < table->size; i++)
+    {
+        free(table->table[i].name);
+        table->table[i].name = NULL;
+        table->table[i].num = -1;
+        table->table[i].offset = -1;
+    }
+
+    free(table->table);
+    table->table = NULL;
+
+    table->size = -1;
+    table->capacity = -1;
 }

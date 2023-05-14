@@ -19,12 +19,15 @@ FILE* fp = fopen("asmfile.asm", "w");
 FILE* dump = fopen("dump.txt", "w");
 
 size_t ALIGN4096 = 4096;
-size_t BUFFERSIZE = 4096;
+size_t BUFFERSIZE = 4096 + 1;
 size_t STRSIZE = 100;
 char INITIAL[40] = "INITIAL";
 
 int BinTransCtor(IR* ir, BinTrans* trans)
 {
+    assert(ir != NULL);
+    assert(trans != NULL);
+
     trans->membuff = (unsigned char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
     trans->exebuff = (unsigned char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
 
@@ -40,8 +43,28 @@ int BinTransCtor(IR* ir, BinTrans* trans)
     return NOERR;
 }
 
+int BinTransDtor(BinTrans* trans)
+{
+    assert(trans != NULL);
+
+    free(trans->exebuff);
+    trans->exebuff = NULL;
+
+    free(trans->labelstable.labels);
+    trans->labelstable.labels = NULL;
+
+    trans->len = 1;
+    trans->labelstable.capacity = -1;
+    trans->labelstable.size = -1;
+
+    return NOERR;
+}
+
 int TranslateIR(IR* ir, BinTrans* trans)
 {
+    assert(ir != NULL);
+    assert(trans != NULL);
+
     trans->len = 0;
     DBG fprintf(fp, "section .text\n");
     DBG fprintf(fp, "global main\n");
@@ -52,8 +75,7 @@ int TranslateIR(IR* ir, BinTrans* trans)
 
     DBG fprintf(fp, "mov r11, Buffer\n");
 
-    Operation movr11 = {MOV_R11_NUM, SIZE_MOV_R11_NUM};
-    WriteBinCmd(trans, &movr11);
+    WriteCmd(MOV_R11_NUM);
     WriteAbsPtr(trans, (uint64_t) trans->membuff);
 
     DBG fprintf(fp, "push r11\n");
@@ -84,6 +106,9 @@ int TranslateIR(IR* ir, BinTrans* trans)
 
 int TranslateFunc(FuncIR* function, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+
     if (strcmp(function->name, "main") != 0)
     {
         DBG fprintf(fp, "%s\n", function->name);
@@ -99,15 +124,12 @@ int TranslateFunc(FuncIR* function, BinTrans* trans)
         DBG fprintf(fp, "mov rax, 0x3c\n"
             "xor rdi, rdi\n"
             "syscall\n");
-        Operation movrax03c = {MOV_RAX_NUM, SIZE_MOV_RAX_NUM};
-        WriteBinCmd(trans, &movrax03c);
+        WriteCmd(MOV_RAX_NUM);
         WriteNum(trans, 0x3c);
 
-        Operation xorrdi = {XOR_RDI_RDI, SIZE_XOR_RDI_RDI};
-        WriteBinCmd(trans, &xorrdi);
+        WriteCmd(XOR_RDI_RDI);
 
-        Operation syscall = {SYSCALL, SIZE_SYSCALL};
-        WriteBinCmd(trans, &syscall);
+        WriteCmd(SYSCALL);
     }
 
     return NOERR;
@@ -115,6 +137,10 @@ int TranslateFunc(FuncIR* function, BinTrans* trans)
 
 int TranslateBlock(FuncIR* function, BlockIR* block, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+
     if (block->size == 0)
     {
         fprintf(fp, ".%s\n", block->name);
@@ -146,6 +172,11 @@ int TranslateBlock(FuncIR* function, BlockIR* block, BinTrans* trans)
 
 int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     switch (cmd->type)
     {
         case OP_VAR:
@@ -192,6 +223,11 @@ int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans*
 
 int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     switch(cmd->oper1.type)
     {
         case NUMTYPE:
@@ -220,6 +256,11 @@ int TranslateVar(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tra
 
 int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     switch(cmd->oper1.type)
     {
         case NUMTYPE:
@@ -249,6 +290,11 @@ int TranslateEq(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tran
 
 int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     switch(cmd->oper1.type)
     {
         case NUMTYPE:
@@ -289,8 +335,7 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
         case OP_ADD:
         {
             DBG fprintf(fp, "add rax, rbx\n");
-            Operation addraxrbx = {ADD_RAX_RBX, SIZE_ADD_RAX_RBX};
-            WriteBinCmd(trans, &addraxrbx);
+            WriteCmd(ADD_RAX_RBX);
 
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
             WriteMovMemReg(RAX, cmd->dest.var->offset);
@@ -300,8 +345,7 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
         case OP_SUB:
         {
             DBG fprintf(fp, "sub rax, rbx\n");
-            Operation subraxrbx = {SUB_RAX_RBX, SIZE_SUB_RAX_RBX};
-            WriteBinCmd(trans, &subraxrbx);
+            WriteCmd(SUB_RAX_RBX);
 
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
             WriteMovMemReg(RAX, cmd->dest.var->offset);
@@ -311,8 +355,7 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
         case OP_MUL:
         {
             DBG fprintf(fp, "mul rbx\n");
-            Operation mulrbx = {MUL_RBX, SIZE_MUL_RBX};
-            WriteBinCmd(trans, &mulrbx);
+            WriteCmd(MUL_RBX);
 
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
             WriteMovMemReg(RAX, cmd->dest.var->offset);
@@ -322,8 +365,7 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
         case OP_DIV:
         {
             DBG fprintf(fp, "div rbx\n");
-            Operation divrbx = {DIV_RBX, SIZE_DIV_RBX};
-            WriteBinCmd(trans, &divrbx);
+            WriteCmd(DIV_RBX);
 
             DBG fprintf(fp, "mov [r11 + %d], rax\n", cmd->dest.var->offset);
             WriteMovMemReg(RAX, cmd->dest.var->offset);
@@ -336,6 +378,11 @@ int TranslateArithOper(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTran
 
 int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     if (strcmp(cmd->oper1.var->name, "zhmurik") == 0)
         TranslatePrintf(function, block, cmd, trans);
     else if (strcmp(cmd->oper1.var->name, "topdek") == 0)
@@ -354,6 +401,10 @@ int TranslateCall(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tr
 
 int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
 
     switch(cmd->dest.type)
     {
@@ -376,14 +427,18 @@ int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tra
     ReduceR11(function, trans);
 
     DBG fprintf(fp, "ret\n");
-    Operation ret = {RET, SIZE_RET};
-    WriteBinCmd(trans, &ret);
+    WriteCmd(RET);
 
     return NOERR;
 }
 
 int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     switch(cmd->dest.type)
     {
         case NUMTYPE:
@@ -396,8 +451,7 @@ int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tran
         {
             DBG fprintf(fp, "cmp DWORD [r11 + %d], 0\n", cmd->dest.var->offset);
 
-            Operation cmp = {CMP_MEM_R11_0, SIZE_CMP_MEM_R11_0};
-            WriteBinCmd(trans, &cmp);
+            WriteCmd(CMP_MEM_R11_0);
             WriteNum(trans, cmd->dest.var->offset);
             WriteNum(trans, 0);
 
@@ -416,6 +470,11 @@ int TranslateIf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tran
 
 int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     DBG fprintf(fp, "pop rax\n");
     WritePopReg(RAX);
 
@@ -434,18 +493,13 @@ int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* 
     // WriteAbsPtr(trans, (uint64_t)trans->formatout);
 
     DBG fprintf(fp, "mov rsi, rax\n");
-    Operation movrdirax = {MOV_RDI_RAX, SIZE_MOV_RDI_RAX};
-    WriteBinCmd(trans, &movrdirax);
-
-
+    WriteCmd(MOV_RDI_RAX);
 
     DBG fprintf(fp, "call printf\n");
-    Operation call = {CALL, SIZE_CALL};
-    WriteBinCmd(trans, &call);
+    WriteCmd(CALL);
 
     uint32_t printptr = (uint64_t)Print - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
     WriteNum(trans, printptr);
-
 
     DBG fprintf(fp, "pop rsp\n");
     WritePopReg(RSP);
@@ -461,6 +515,11 @@ int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* 
 
 int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     DBG fprintf(fp, "pop rax\n");
     WritePopReg(RAX);
 
@@ -479,12 +538,10 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* t
     // WriteAbsPtr(trans, (uint64_t)trans->formatout);
 
     DBG fprintf(fp, "mov rsi, rax\n");
-    Operation movrdirax = {MOV_RDI_RAX, SIZE_MOV_RDI_RAX};
-    WriteBinCmd(trans, &movrdirax);
+    WriteCmd(MOV_RDI_RAX);
 
     DBG fprintf(fp, "call scanf\n");
-    Operation call = {CALL, SIZE_CALL};
-    WriteBinCmd(trans, &call);
+    WriteCmd(CALL);
 
     uint32_t scanfptr = (uint64_t)Scanf - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
     WriteNum(trans, scanfptr);
@@ -503,6 +560,11 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* t
 
 int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     DBG fprintf(fp, "mov rax, [r11 + %d]\n", cmd->dest.var->offset);
     WriteMovRegMem(RAX, cmd->dest.var->offset);
 
@@ -514,6 +576,11 @@ int TranslateParamIn(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans*
 
 int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     DBG fprintf(fp, "pop rbx\n");
     WritePopReg(RBX);
 
@@ -531,9 +598,13 @@ int TranslateParamOut(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans
 
 int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+    assert(block != NULL);
+    assert(cmd != NULL);
+
     DBG fprintf(fp, "mov rax, r11\n");
-    Operation movraxr11 = {MOV_RAX_R11, SIZE_MOV_RAX_R11};
-    WriteBinCmd(trans, &movraxr11);
+    WriteCmd(MOV_RAX_R11);
 
     DBG fprintf(fp, "add rax, %d\n", cmd->dest.var->offset);
     WriteAddRegNum(RAX, cmd->dest.var->offset);
@@ -546,6 +617,9 @@ int TranslateParamS(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* 
 
 int EnlargeR11(FuncIR* function, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+
     DBG fprintf(fp, "add r11, %d\n", function->table.capacity * 8);
 
     WriteAddRegNum(R11, function->table.capacity * 8);
@@ -555,10 +629,12 @@ int EnlargeR11(FuncIR* function, BinTrans* trans)
 
 int ReduceR11(FuncIR* function, BinTrans* trans)
 {
+    assert(function != NULL);
+    assert(trans != NULL);
+
     DBG fprintf(fp, "sub r11, %d\n", function->table.capacity * 8);
 
-    Operation subr11num = {SUB_R11_NUM, SIZE_SUB_R11_NUM};
-    WriteBinCmd(trans, &subr11num);
+    WriteCmd(SUB_R11_NUM);
     WriteNum(trans, function->table.capacity * 8);
 
     return NOERR;
@@ -574,6 +650,8 @@ int ExternFunctions()
 
 int CountLabels(IR* ir)
 {
+    assert(ir != NULL);
+
     int labels = 0;
 
     labels += ir->funcnum;
@@ -588,6 +666,9 @@ int CountLabels(IR* ir)
 
 int WriteBinCmd(BinTrans* trans, Operation* oper)
 {
+    assert(oper != NULL);
+    assert(trans != NULL);
+
     *(unsigned int*)(trans->exebuff + trans->len) = oper->opcode;
     trans->len += oper->size;
 
@@ -596,6 +677,8 @@ int WriteBinCmd(BinTrans* trans, Operation* oper)
 
 int WriteAbsPtr(BinTrans* trans, uint64_t ptr)
 {
+    assert(trans != NULL);
+
     *(uint64_t*) (trans->exebuff + trans->len) = ptr;
     trans->len += sizeof(uint64_t);
 
@@ -604,6 +687,8 @@ int WriteAbsPtr(BinTrans* trans, uint64_t ptr)
 
 int WriteNum(BinTrans* trans, int num)
 {
+    assert(trans != NULL);
+
     *(int*) (trans->exebuff + trans->len) = num;
     trans->len += sizeof(int);
 
@@ -612,6 +697,9 @@ int WriteNum(BinTrans* trans, int num)
 
 int WriteCall(BinTrans* trans, char* func)
 {
+    assert(trans != NULL);
+    assert(func != NULL);
+
     Operation call = {CALL, SIZE_CALL};
     WriteBinCmd(trans, &call);
 
@@ -624,6 +712,10 @@ int WriteCall(BinTrans* trans, char* func)
 
 int WriteUnCndJump(BinTrans* trans, char* func, char* block)
 {
+    assert(trans != NULL);
+    assert(func != NULL);
+    assert(block != NULL);
+
     Operation jmp = {JMP, SIZE_JMP};
     WriteBinCmd(trans, &jmp);
 
@@ -636,6 +728,10 @@ int WriteUnCndJump(BinTrans* trans, char* func, char* block)
 
 int WriteCndJump(BinTrans* trans, char* func, char* block)
 {
+    assert(trans != NULL);
+    assert(func != NULL);
+    assert(block != NULL);
+
     Operation jne = {JNE, SIZE_JNE};
     WriteBinCmd(trans, &jne);
 
@@ -648,6 +744,10 @@ int WriteCndJump(BinTrans* trans, char* func, char* block)
 
 int FindLabel(BinTrans* trans, char* func, char* block)
 {
+    assert(trans != NULL);
+    assert(func != NULL);
+    assert(block != NULL);
+
     int ip = 0;
     for (int i = 0; i < trans->labelstable.size; i++)
     {
@@ -666,6 +766,10 @@ int FindLabel(BinTrans* trans, char* func, char* block)
 
 int AddLabel(BinTrans* trans, char* func, char* block)
 {
+    assert(trans != NULL);
+    assert(func != NULL);
+    assert(block != NULL);
+
     trans->labelstable.labels[trans->labelstable.size].block = block;
     trans->labelstable.labels[trans->labelstable.size].func = func;
     trans->labelstable.labels[trans->labelstable.size].ip = trans->len;
@@ -676,13 +780,15 @@ int AddLabel(BinTrans* trans, char* func, char* block)
 
 int Print(int num)
 {
-    printf("%d\n", num);
+    printf("%d ", num);
 
     return NOERR;
 }
 
 int DumpBuffer(BinTrans* trans)
 {
+    assert(trans != NULL);
+
     for (int i = 0; i < trans->len; i++)
     {
         fprintf(dump, "%02x", trans->exebuff[i]);

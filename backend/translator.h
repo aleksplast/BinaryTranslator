@@ -87,6 +87,8 @@ int AddLabel(BinTrans* trans, char* func, char* block);
 
 int BinTransCtor(IR* ir, BinTrans* trans);
 
+int BinTransDtor(BinTrans* trans);
+
 int WriteCall(BinTrans* trans, char* func);
 
 int FindLabel(BinTrans* trans, char* func, char* block);
