@@ -39,8 +39,6 @@ Let's parse our tree into new form, which looks like this:
 
 Programm is divided into function structures, then each function is divided into blocks. Each block contain an array of command structures, where commands is executed in linear order. Each command structure contain various information about command itself.
 
-For example, IF command creates two new blocks: first is executed if the condition is true, second if not. 
-
 With the IR done, let's proceed to translation itself.
 
 ## Step II: Translation
