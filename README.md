@@ -56,14 +56,14 @@ Here is how each command is translated. Each command is shown in assembly analog
 **Variable declaration** 
 ~~~Assembly
 mov rax, variable value  
-mov [r11 + offset], rax ; r11 + offset is the adress, where variable is stored
+mov [r11 + offset], rax ; r11 + offset is the address, where variable is stored
 ~~~
 
 
 **Assignment** 
 ~~~Assembly
 mov rax, variable value  
-mov [r11 + offset], rax ; r11 + offset is the adress, where variable is stored
+mov [r11 + offset], rax ; r11 + offset is the address, where variable is stored
 ~~~
 
 **Arithmetic operations** 
@@ -71,7 +71,7 @@ mov [r11 + offset], rax ; r11 + offset is the adress, where variable is stored
 mov rax, variable1 value
 mov rbx, variable2 value 
 Arithmetic operation   
-mov [r11 + offset], rax  ; r11 + offset is the adress, where variable is stored
+mov [r11 + offset], rax  ; r11 + offset is the address, where variable is stored
 ~~~
 
 **Parameters** 
