@@ -2,11 +2,11 @@
 
 ## Goal of this project
 
-The goal of this project is to create JIT compiler for my language. We will also compare it's working speed with my CPU's working speed.
+The goal of this project is to create JIT compiler for my language. We will also compare it's perfomance with my CPU's perfomance.
 
 ## Main idea
 
-In this [project](https://github.com/aleksplast/My-language), we wrote our own Programming language. It translates programm into binary code, which is then executed on our Processor emulator.
+In this [project](https://github.com/aleksplast/My-language), we wrote our own Programming language. It translates programm into binary code, which is then executed on our CPU emulator.
 
 Let's take a step further and try to translate our programm into **x86-64 machine code**. We will put it into a buffer and then execute it with the help of **mprotect**.
 
