@@ -37,7 +37,7 @@ Let's parse our tree into new form, which looks like this:
 +-------------------------------------+-------------------------------------+
 ~~~
 
-Programm is divided into function structures, then each function is divided into blocks. Where each block contain an array of command structures, where commands is executed in linear order. Each command structer contain various information about command itself.
+Programm is divided into function structures, then each function is divided into blocks. Each block contain an array of command structures, where commands is executed in linear order. Each command structure contain various information about command itself.
 
 For example, IF command creates two new blocks: first is executed if the condition is true, second if not. 
 
