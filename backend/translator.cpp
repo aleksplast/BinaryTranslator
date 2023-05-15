@@ -99,7 +99,7 @@ int TranslateIR(IR* ir, BinTrans* trans)
     DBG fprintf(fp, "formatout: db \"%%d\", 0x0a, 0x00\n");
     DBG fprintf(fp, "Message: db \"HelloWorld!\", 0x0a, 0x00");
 
-    DumpBuffer(trans);
+    DBG DumpBuffer(trans);
 
     return NOERR;
 }
@@ -114,7 +114,9 @@ int TranslateFunc(FuncIR* function, BinTrans* trans)
         DBG fprintf(fp, "%s\n", function->name);
         AddLabel(trans, function->name, INITIAL);
     }
+
     EnlargeR11(function, trans);
+
     for (int i = 0; i < function->blocksnum; i++)
     {
         TranslateBlock(function, &function->blocks[i], trans);
@@ -216,7 +218,7 @@ int TranslateCommand(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans*
             TranslateParamS(function, block, cmd, trans);
             break;
     }
-    DumpBuffer(trans);
+    DBG DumpBuffer(trans);
 
     return NOERR;
 }
@@ -800,7 +802,6 @@ int DumpBuffer(BinTrans* trans)
 
 int Scanf(int* num)
 {
-    int gay = 0;
     scanf("%d", num);
 
     return NOERR;

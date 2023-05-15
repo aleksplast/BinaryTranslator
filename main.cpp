@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <cstdlib>
+#include <time.h>
 
 #include "frontend/frontend.h"
 #include "backend/ir.h"
@@ -63,7 +64,6 @@ int main(int argc, char* argv[])
     mprotect(trans.exebuff, trans.len + 1, PROT_EXEC);
 
     RunCode(trans.exebuff);
-    fflush(stdin);
 
     mprotect(trans.exebuff, trans.len + 1, PROT_WRITE);
     BinTransDtor(&trans);

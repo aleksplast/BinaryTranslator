@@ -43,7 +43,7 @@ FuncIR* TreeToIR(Tree* tree, IR* ir)
         node = node->rightchild;
     }
 
-    DumpIR(ir);
+    DBG DumpIR(ir);
 
     return 0;
 }
@@ -65,10 +65,7 @@ int CountFunctions(Tree* tree)
 
 int FuncToIR(Node* node, FuncIR* function)
 {
-    FILE* table = fopen("vartable.txt", "a");
     VarTable vartable = CreateVarTable(node);
-    DumpTable(table, &vartable);
-    fclose(table);
 
     function->table = vartable;
 
