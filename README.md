@@ -2,7 +2,7 @@
 
 ## Goal of this project
 
-The goal of this project is to create JIT compiler for my language. We will also compare it's perfomance with my CPU's perfomance.
+The goal of this project is to create JIT compiler for my language. We will also compare it's perfomance with CPU emulator perfomance.
 
 ## Main idea
 
