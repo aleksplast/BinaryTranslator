@@ -18,11 +18,24 @@ Let's take a look, how it can be done, step by step.
 
 First of all, we have a tree, constructed by our frontend. Of course, we can use it as IR, but it lacks information about commands and translation into binary format is harder due to non-linear commands order.
 
-ЗДЕСЬ ЖЕСКАЯ КАРТИНКА ДЕРЕВА 
+<details>
+  <summary> Tree dump </summary>
+<img align="center" src = "https://github.com/aleksplast/BinaryTranslator/assets/111467660/8f24ee34-7a5c-4b0c-af8f-89fd5b57d078">
+</details>
 
 Let's parse our tree into new form, which looks like this:
 
-ЗДЕСЬ ЖЕСКАЯ КАРТИНКА ИР'а
+~~~
++-------------------------------------+-------------------------------------+
+|            Function 1               |            Function 2               |
+|-------------------------------------|-------------------------------------|
+|    Block1     |        Block2       |    Block1     |        Block2       |
+|---------------|---------------------|---------------|---------------------|
+|  Cmd1 |  Cmd2 | Cmd1 | Cmd2 | Cmd3  |  Cmd1 |  Cmd2 | Cmd1 | Cmd2 | Cmd3  |
+|-------|-------|------|------|-------|-------|-------|------|------|-------|
+| info  | info  | info | info | info  | info  | info  | info | info | info  |
++-------------------------------------+-------------------------------------+
+~~~
 
 Programm is divided into function structures, then each function is divided into blocks. Where each block contain an array of command structures, where commands is executed in linear order. Each command structer contain various information about command itself.
 
@@ -40,7 +53,7 @@ Let's create NASM file from our IR, as it is easier to debug. In this step we re
 
 ### Generating binary code
 
-Here is how each command is translated:
+Here is how each command is translated. Each command is shown in assembly analogue for clarity.
 
 **Variable declaration** 
 ~~~Assembly
@@ -71,7 +84,7 @@ pop param value ; At the start of the function
 
 **Function call** 
 ~~~Assembly
-call relative adress
+call relative address
 ~~~
 
 **Return** 
@@ -85,6 +98,72 @@ cmp cond, 0
 jne blockIF  
 jmp blockELSE   
 ~~~
+
+**Printf**
+
+This function is realised like this:
+~~~C++
+int Print(int num)
+{
+    printf("%d ", num);
+
+    return NOERR;
+}
+~~~
+
+Then, by calculating relative address, we can call this function from our bin code.
+
+**Scanf**
+
+This function is similar to Printf:
+~~~C++
+int Scanf(int* num)
+{
+    scanf("%d", num);
+
+    return NOERR;
+}
+~~~
+
+At this point, JIT is working. Let's do some perfomance tests.
+
+## Perfomance tests
+
+To test JIT, we wrote programms, that calculates factorial and fibonacci numbers. You can find examples [here](https://github.com/aleksplast/My-language/tree/main/examples). 
+
+Let's compare JIT execution time and our CPU emulator execution time. First of all, let's test calculation of 5'th fibonacci number. Numbers in the table below shows average speed of this calculation.
+
+|    | CPU emulator | JIT | 
+| :----------: | :-------------------: | :-------------------: | 
+| Execution time (μs) | 2376 |      130        |    
+| Speed growth | 1 |      18.27        |    
+
+Now, let's test calculation of 10! . Numbers in the table below shows average speed of this calculation.
+
+|    | CPU emulator | JIT | 
+| :----------: | :-------------------: | :-------------------: | 
+| Execution time (μs) | 2722 |      127        |    
+| Speed growth | 1 |      21.43        |  
+
+Speed growth in both cases is **~20**.
+
+## Conclusion
+
+In this work, we made a working JIT compiler for our language. It gives significant boost in perfomance. 
+In further development of this work we can implement some optimizations and also make our own ELF file, creating true compiler.
+
+## References
+
+https://github.com/aleksplast/My-language
+
+https://www.felixcloutier.com/x86 - x86 instruction reference
+
+http://citforum.ru/programming/theory/serebryakov/8.shtml - some information about IR
+
+
+
+
+
 
 
 
