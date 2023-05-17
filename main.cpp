@@ -2,13 +2,14 @@
 #include <locale.h>
 #include <cstdlib>
 #include <time.h>
+#include <sys/mman.h>
 
 #include "frontend/frontend.h"
 #include "backend/ir.h"
 #include "backend/translator.h"
 #include "backend/backend.h"
 #include "middleend/middleend.h"
-#include "sys/mman.h"
+#include "backend/elfwrite.h"
 
 int inline RunCode(unsigned char* buff);
 
@@ -16,6 +17,7 @@ int main(int argc, char* argv[])
 {
     const char* input = GetComArg(argc, argv);
     const char data[50] = "lib/data.txt";
+    const char elffile[50] = "elffile";
     FILE* fp = fopen("dumpfile.txt", "w");
     fclose(fp);
 
@@ -61,11 +63,13 @@ int main(int argc, char* argv[])
 
     TranslateIR(&ir, &trans);
 
-    mprotect(trans.exebuff, trans.len + 1, PROT_EXEC);
+    CreateElfFile(&trans, elffile);
 
-    RunCode(trans.exebuff);
-
-    mprotect(trans.exebuff, trans.len + 1, PROT_WRITE);
+//     mprotect(trans.exebuff, trans.len + 1, PROT_EXEC);
+//
+//     RunCode(trans.exebuff);
+//
+//     mprotect(trans.exebuff, trans.len + 1, PROT_WRITE);
     BinTransDtor(&trans);
     IrDtor(&ir);
 

@@ -2,6 +2,7 @@
 #define TRANSLATOR_H
 #include <cstdint>
 
+#include "ir.h"
 #include "opcodes.h"
 
 struct Operation

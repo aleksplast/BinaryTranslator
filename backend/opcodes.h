@@ -4,6 +4,7 @@
 enum OPCODES
 {
     MOV_R11_NUM = 0xBB49,
+    MOV_R11_BUF = 0xBB41,
     PUSH_R11 = 0x5341,
     PUSH_RBP = 0x55,
     PUSH_RSP = 0x54,
@@ -42,6 +43,7 @@ enum OPCODES
 enum OPCODES_SIZES
 {
     SIZE_MOV_R11_NUM = 2,
+    SIZE_MOV_R11_BUF = 2,
     SIZE_PUSH_R11 = 2,
     SIZE_PUSH_RBP = 1,
     SIZE_PUSH_RSP = 1,

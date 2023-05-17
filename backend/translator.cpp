@@ -19,9 +19,10 @@ FILE* fp = fopen("asmfile.asm", "w");
 FILE* dump = fopen("dump.txt", "w");
 
 size_t ALIGN4096 = 4096;
-size_t BUFFERSIZE = 4096 + 1;
+size_t BUFFERSIZE = 4096;
 size_t STRSIZE = 100;
 char INITIAL[40] = "INITIAL";
+unsigned int ENTRY = 0x400080;
 
 int BinTransCtor(IR* ir, BinTrans* trans)
 {
@@ -37,8 +38,8 @@ int BinTransCtor(IR* ir, BinTrans* trans)
 
     trans->formatout = (char*) calloc(STRSIZE + 1, sizeof(char));
     trans->formatin = (char*) calloc(STRSIZE + 1, sizeof(char));
-    sprintf(trans->formatout, "\"%%d\"\n");
-    sprintf(trans->formatin, "\"%%d\"");
+//    sprintf(trans->formatout, "\"%%d\"\n");
+//    sprintf(trans->formatin, "\"%%d\"");
 
     return NOERR;
 }
@@ -75,8 +76,8 @@ int TranslateIR(IR* ir, BinTrans* trans)
 
     DBG fprintf(fp, "mov r11, Buffer\n");
 
-    WriteCmd(MOV_R11_NUM);
-    WriteAbsPtr(trans, (uint64_t) trans->membuff);
+    WriteCmd(MOV_R11_BUF);
+    WriteNum(trans, ENTRY + BUFFERSIZE);
 
     DBG fprintf(fp, "push r11\n");
     DBG fprintf(fp, "push rbp\n");
@@ -407,6 +408,9 @@ int TranslateRet(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* tra
     assert(trans != NULL);
     assert(block != NULL);
     assert(cmd != NULL);
+
+    if (strcmp(function->name, "main") == 0)
+        return NOERR;
 
     switch(cmd->dest.type)
     {
