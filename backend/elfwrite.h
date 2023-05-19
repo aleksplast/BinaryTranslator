@@ -9,4 +9,6 @@ int CreateElfHeader(FILE* elf);
 
 int CreateProgrammHeader(FILE* elf);
 
+int AddBinFunc(FILE* func, FILE* elf);
+
 #endif // ELFWRITE.H

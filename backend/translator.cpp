@@ -23,6 +23,7 @@ size_t BUFFERSIZE = 4096;
 size_t STRSIZE = 100;
 char INITIAL[40] = "INITIAL";
 unsigned int ENTRY = 0x400080;
+int PRINTSIZE = 139;
 
 int BinTransCtor(IR* ir, BinTrans* trans)
 {
@@ -76,8 +77,16 @@ int TranslateIR(IR* ir, BinTrans* trans)
 
     DBG fprintf(fp, "mov r11, Buffer\n");
 
+    WriteCmd(MOV_R12_NUM);
+    WriteNum(trans, ENTRY + 2 * BUFFERSIZE - 20);
+
+    WriteCmd(MOV_R13_R12);
+
     WriteCmd(MOV_R11_BUF);
-    WriteNum(trans, ENTRY + BUFFERSIZE);
+    WriteNum(trans, ENTRY + 2 * BUFFERSIZE);
+
+    WriteCmd(MOV_R14_NUM);
+    WriteNum(trans, ENTRY + 2 * BUFFERSIZE - 40);
 
     DBG fprintf(fp, "push r11\n");
     DBG fprintf(fp, "push rbp\n");
@@ -92,6 +101,8 @@ int TranslateIR(IR* ir, BinTrans* trans)
     {
         TranslateFunc(&ir->functions[i], trans);
     }
+
+    trans->printptr = ENTRY + BUFFERSIZE;
 
     DBG fprintf(fp, "section .data\n"
 
@@ -492,20 +503,29 @@ int TranslatePrintf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* 
 
     DBG fprintf(fp, "push rsp\n");
     WritePushReg(RSP);
+//
+//     WritePushReg(R12);
+//     WritePushReg(R13);
 
     DBG fprintf(fp, "mov rdi, formatout\n");
     // Operation movrdi = {MOV_RDI_NUM, SIZE_MOV_RDI_NUM};
     // WriteBinCmd(trans, &movrdi);
     // WriteAbsPtr(trans, (uint64_t)trans->formatout);
 
-    DBG fprintf(fp, "mov rsi, rax\n");
-    WriteCmd(MOV_RDI_RAX);
-
-    DBG fprintf(fp, "call printf\n");
+//     DBG fprintf(fp, "mov rsi, rax\n");
+//     WriteCmd(MOV_RDI_RAX);
+//
+//     DBG fprintf(fp, "call printf\n");
+//     WriteCmd(CALL);
+//
+//     uint32_t printptr = (uint64_t)Print - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
+//     WriteNum(trans, printptr);
     WriteCmd(CALL);
+    WriteNum(trans, BUFFERSIZE - sizeof(int) - trans->len);
 
-    uint32_t printptr = (uint64_t)Print - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
-    WriteNum(trans, printptr);
+    // WritePopReg(R13);
+    // WritePopReg(R12);
+    // WriteCmd(MOV_R13_R12);
 
     DBG fprintf(fp, "pop rsp\n");
     WritePopReg(RSP);
@@ -546,11 +566,12 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* t
     DBG fprintf(fp, "mov rsi, rax\n");
     WriteCmd(MOV_RDI_RAX);
 
-    DBG fprintf(fp, "call scanf\n");
+    // DBG fprintf(fp, "call scanf\n");
     WriteCmd(CALL);
-
-    uint32_t scanfptr = (uint64_t)Scanf - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
-    WriteNum(trans, scanfptr);
+    WriteNum(trans, BUFFERSIZE + PRINTSIZE - sizeof(int) - trans->len);
+//
+//     uint32_t scanfptr = (uint64_t)Scanf - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
+//     WriteNum(trans, scanfptr);
 
     DBG fprintf(fp, "pop rsp\n");
     WritePopReg(RSP);

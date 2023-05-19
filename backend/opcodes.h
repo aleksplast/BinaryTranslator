@@ -38,6 +38,13 @@ enum OPCODES
     SUB_R11_NUM = 0xEB8149,
     SYSCALL = 0x050f,
     MOV_RDI_RAX = 0xC78948,
+    MOV_R13_R12 = 0xE5894d,
+    MOV_R12_NUM = 0xBC41,
+    PUSH_R12 = 0x5441,
+    PUSH_R13 = 0x4155,
+    POP_R13 = 0x5D41,
+    POP_R12 = 0x4C41,
+    MOV_R14_NUM = 0xBE41,
 };
 
 enum OPCODES_SIZES
@@ -77,6 +84,13 @@ enum OPCODES_SIZES
     SIZE_SUB_R11_NUM = 3,
     SIZE_SYSCALL = 2,
     SIZE_MOV_RDI_RAX = 3,
+    SIZE_MOV_R13_R12 = 3,
+    SIZE_MOV_R12_NUM = 2,
+    SIZE_PUSH_R13 = 2,
+    SIZE_PUSH_R12 = 2,
+    SIZE_POP_R12 = 2,
+    SIZE_POP_R13 = 2,
+    SIZE_MOV_R14_NUM = 2,
 };
 
 #endif //OPCODES_H

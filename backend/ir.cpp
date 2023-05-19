@@ -816,4 +816,6 @@ int TableDtor(VarTable* table)
 
     table->size = -1;
     table->capacity = -1;
+
+    return NOERR;
 }

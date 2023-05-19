@@ -31,6 +31,7 @@ struct BinTrans
     unsigned char* exebuff;
     int len;
     LabelsTable labelstable;
+    unsigned int printptr;
 
     char* formatout;
     char* formatin;
