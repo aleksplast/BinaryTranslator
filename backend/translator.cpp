@@ -30,15 +30,15 @@ int BinTransCtor(IR* ir, BinTrans* trans)
     assert(ir != NULL);
     assert(trans != NULL);
 
-    trans->membuff = (unsigned char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
-    trans->exebuff = (unsigned char*) aligned_alloc(ALIGN4096, BUFFERSIZE);
+    trans->membuff = (unsigned char*) calloc(BUFFERSIZE, sizeof(unsigned char));
+    trans->exebuff = (unsigned char*) calloc(BUFFERSIZE, sizeof(unsigned char));
 
     trans->labelstable.capacity = CountLabels(ir);
     trans->labelstable.size = 0;
-    trans->labelstable.labels = (Label*) calloc(trans->labelstable.capacity + 1, sizeof(Label));
+    trans->labelstable.labels = (Label*) calloc(trans->labelstable.capacity + 100, sizeof(Label));
 
-    trans->formatout = (char*) calloc(STRSIZE + 1, sizeof(char));
-    trans->formatin = (char*) calloc(STRSIZE + 1, sizeof(char));
+    // trans->formatout = (char*) calloc(STRSIZE + 1, sizeof(char));
+    // trans->formatin = (char*) calloc(STRSIZE + 1, sizeof(char));
 //    sprintf(trans->formatout, "\"%%d\"\n");
 //    sprintf(trans->formatin, "\"%%d\"");
 
@@ -50,6 +50,8 @@ int BinTransDtor(BinTrans* trans)
     assert(trans != NULL);
 
     free(trans->exebuff);
+    trans->exebuff = NULL;
+    free(trans->membuff);
     trans->exebuff = NULL;
 
     free(trans->labelstable.labels);

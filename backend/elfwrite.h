@@ -7,8 +7,8 @@ int CreateElfFile(BinTrans* trans, const char* filename);
 
 int CreateElfHeader(FILE* elf);
 
-int CreateProgrammHeader(FILE* elf);
+int CreateProgrammHeader(FILE* elf, int stlib);
 
-int AddBinFunc(FILE* func, FILE* elf);
+int WriteBinFunc(FILE* func, FILE* elf);
 
 #endif // ELFWRITE.H

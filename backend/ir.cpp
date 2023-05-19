@@ -55,6 +55,8 @@ int CountFunctions(Tree* tree)
 
     while (node != NULL)
     {
+        if (node->leftchild == NULL)
+            return numfunc;
         if (node->leftchild->optype == OP_FUNC && node->leftchild->rightchild != NULL)
             numfunc += 1;
         node = node->rightchild;
@@ -774,7 +776,7 @@ int FuncDtor(FuncIR* func)
     }
 
     TableDtor(&func->table);
-    free(func->name);
+//    free(func->name);
     func->name = NULL;
 
     func->blocksnum = -1;
