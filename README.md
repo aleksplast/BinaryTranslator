@@ -1,14 +1,14 @@
-# JIT
+# Compiler
 
 ## Goal of this project
 
-The goal of this project is to create JIT compiler for my language. We will also compare it's perfomance with CPU emulator perfomance.
+The goal of this project is to create compiler for my language. We will also compare it's perfomance with CPU emulator perfomance.
 
 ## Main idea
 
 In this [project](https://github.com/aleksplast/My-language), we wrote our own Programming language. It translates programm into binary code, which is then executed on our CPU emulator.
 
-Let's take a step further and try to translate our programm into **x86-64 machine code**. We will put it into a buffer and then execute it with the help of **mprotect**.
+Let's take a step further and try to translate our programm into **x86-64 machine code**. Final goal is to create elf file, which can execute our programm.
 
 Let's take a look, how it can be done, step by step.
 
@@ -41,13 +41,13 @@ Programm is divided into function structures, then each function is divided into
 
 With the IR done, let's proceed to translation itself.
 
-## Step II: Translation
+## Step II: Translation into buffer
 
 First of all, we must think about structure of our programm: where to store variables, how to make arithmetic operations, how to pass parameters into functions and many more. Also we must be certain that it works properly. For this we can take an extra step.
 
 ### NASM file step
 
-Let's create NASM file from our IR, as it is easier to debug. In this step we realised the structure of programm: variables is stored in memory, arithmetic operations is done with the help of **rax** and **rbx** registers, parameters is passed throught the stack. When all done and working, we can proceed to the final step.
+Let's create NASM file from our IR, as it is easier to debug. This step is taken for debug and debug only. In this step we realised the structure of programm: variables is stored in memory, arithmetic operations is done with the help of **rax** and **rbx** registers, parameters is passed throught the stack. When all done and working, we can proceed to the final step.
 
 ### Generating binary code
 
@@ -123,22 +123,28 @@ int Scanf(int* num)
 }
 ~~~
 
-At this point, JIT is working. Let's do some perfomance tests.
+At this point, is we can execute buffer with commands with the help of **mprotect**. When we are sure, that everything is working properly, we can do the final step.
+
+## STEP III: ELF file
+
+Let's create a small ELF file, that contains only elf header, programm header and one section. We can place our buffer with translated commands in here. There is a problem with **printf** and **scanf**, so we must rewrite it by our own hands on assembly. When everything is done, we get a working compiler. Let's do some perfomance tests.
+
+
 
 ## Perfomance tests
 
-To test JIT, we wrote programms, that calculates factorial and fibonacci numbers. You can find examples [here](https://github.com/aleksplast/My-language/tree/main/examples). 
+To test compiler, we wrote programms, that calculates factorial and fibonacci numbers. You can find examples [here](https://github.com/aleksplast/My-language/tree/main/examples). 
 
-Let's compare JIT execution time and our CPU emulator execution time. First of all, let's test calculation of 5'th fibonacci number. Numbers in the table below shows average speed of this calculation.
+Let's compare elf execution time and our CPU emulator execution time. First of all, let's test calculation of 5'th fibonacci number. Numbers in the table below shows average speed of this calculation.
 
-|    | CPU emulator | JIT | 
+|    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
 | Execution time (μs) | 2376 |      130        |    
 | Speed growth | 1 |      18.27        |    
 
 Now, let's test calculation of 10! . Numbers in the table below shows average speed of this calculation.
 
-|    | CPU emulator | JIT | 
+|    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
 | Execution time (μs) | 2722 |      127        |    
 | Speed growth | 1 |      21.43        |  
