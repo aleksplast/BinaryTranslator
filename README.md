@@ -134,7 +134,7 @@ Let's create a small ELF file, that contains only elf header, programm header an
 
 To test compiler, we wrote programms, that calculates factorial and fibonacci numbers. You can find examples [here](https://github.com/aleksplast/My-language/tree/main/examples). 
 
-Let's compare elf execution time and our CPU emulator execution time. Last one was compiled with -O3 flag. First of all, let's test calculation of 5'th fibonacci number. Numbers in the table below show average speed of this calculation.
+Let's compare elf execution time and our CPU emulator execution time. Last one was compiled with `-O3` flag. First of all, let's test calculation of 5'th fibonacci number. Numbers in the table below show average speed of this calculation.
 
 |    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
