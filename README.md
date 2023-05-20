@@ -127,7 +127,7 @@ At this point, is we can execute buffer with commands with the help of **mprotec
 
 ## STEP III: ELF file
 
-Let's create a small ELF file, that contains only elf header, programm header and one section. We can place our buffer with translated commands in here. There is a problem with **printf** and **scanf**, so we must rewrite it by our own hands on assembly. When everything is done, we get a working compiler. Let's do some perfomance tests.
+Let's create a small ELF file, that contains only elf header, programm header and one section. We can place our buffer with translated commands in here. There is a problem with **printf** and **scanf**, so we must rewrite them by our own hands on assembly. With everything done, let's do some perfomance tests.
 
 
 
@@ -139,22 +139,21 @@ Let's compare elf execution time and our CPU emulator execution time. First of a
 
 |    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
-| Execution time (μs) | 2376 |      130        |    
-| Speed growth | 1 |      18.27        |    
+| Execution time (μs) | 226.8 |      23.8        |    
+| Speed growth | 1 |      9.5        |    
 
 Now, let's test calculation of 10! . Numbers in the table below shows average speed of this calculation.
 
 |    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
-| Execution time (μs) | 2722 |      127        |    
-| Speed growth | 1 |      21.43        |  
+| Execution time (μs) | 236.9 |     26.7         |    
+| Speed growth | 1 |      8.8        |  
 
-Speed growth in both cases is **~20**.
+We can notice significant growth in speed.
 
 ## Conclusion
 
-In this work, we made a working JIT compiler for our language. It gives significant boost in perfomance. 
-In further development of this work we can implement some optimizations and also make our own ELF file, creating true compiler.
+In this work, we made a working compiler for our language. It gives significant boost in perfomance. 
 
 ## References
 
@@ -163,6 +162,8 @@ https://github.com/aleksplast/My-language
 https://www.felixcloutier.com/x86 - x86 instruction reference
 
 http://citforum.ru/programming/theory/serebryakov/8.shtml - some information about IR
+
+https://cirosantilli.com/elf-hello-world - simple elf file
 
 
 
