@@ -139,15 +139,15 @@ Let's compare elf execution time and our CPU emulator execution time. First of a
 
 |    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
-| Execution time (μs) | 226.8 |      23.8        |    
-| Speed growth | 1 |      9.5        |    
+| Execution time (μs) | 205 |      35        |    
+| Speed growth | 1 |      5.8        |    
 
 Now, let's test calculation of 10! . Numbers in the table below show average speed of this calculation.
 
 |    | CPU emulator | elf | 
 | :----------: | :-------------------: | :-------------------: | 
-| Execution time (μs) | 236.9 |     26.7         |    
-| Speed growth | 1 |      8.8        |  
+| Execution time (μs) | 136.7 |     26.7         |    
+| Speed growth | 1 |     5.1        |  
 
 We can notice significant growth in speed.
 
