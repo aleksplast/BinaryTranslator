@@ -152,7 +152,7 @@ We can notice significant growth in speed.
 
 ## Conclusion
 
-In this work, we made a working compiler for our language. It gives significant boost in perfomance. 
+In this work, we made a working compiler for our language. It gives significant boost in perfomance. Speed growth is around **5-6** times in tested programms.
 
 ## References
 
