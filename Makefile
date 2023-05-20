@@ -33,10 +33,10 @@ cmd:
 	sudo $(LD) commands commands.o
 
 scanf:
-	sudo $(NASM) -f bin binscanf scanf.asm
+	sudo nasm -f elf64 -o binscanf scanf.asm
 
 print:
-	sudo nasm -f bin printf.asm -l binprint
+	sudo nasm -f elf64 -o binprint printf.asm
 
 clean:
 	rm -rf *.png *.dot *.o

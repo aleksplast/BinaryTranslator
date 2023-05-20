@@ -569,8 +569,11 @@ int TranslateScanf(FuncIR* function, BlockIR* block, IRCommand* cmd, BinTrans* t
     WriteCmd(MOV_RDI_RAX);
 
     // DBG fprintf(fp, "call scanf\n");
+    FILE* print = fopen("binprint", "r");
+    int size = FileSize(print) - 0x180;
+    fclose(print);
     WriteCmd(CALL);
-    WriteNum(trans, BUFFERSIZE + PRINTSIZE - sizeof(int) - trans->len);
+    WriteNum(trans, BUFFERSIZE + size - sizeof(int) - trans->len);
 //
 //     uint32_t scanfptr = (uint64_t)Scanf - sizeof(int) - trans->len - (uint64_t)trans->exebuff;
 //     WriteNum(trans, scanfptr);
