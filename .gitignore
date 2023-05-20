@@ -9,7 +9,6 @@ main
 *.png
 *.txt
 lib
-*.asm
 asmfile
 commands
 asm
