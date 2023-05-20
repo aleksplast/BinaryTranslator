@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 
     CreateAncestor(tree.anchor, NULL, &tree);
 
-//    CreateAsmProgramm(tree.anchor, asmprog);
+    CreateAsmProgramm(tree.anchor, asmprog);
 
     IR ir = {};
     TreeToIR(&tree, &ir);

@@ -17,10 +17,10 @@ LD := ld -s -o
 .PHONY: all clean
 
 main: $(SRC)
-	$(CC) $^ -o $@ -fsanitize=address,bool,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,unreachable,vla-bound,vptr
+	$(CC) $^ -o $@
 
 cpu: $(SRCCPU)
-	$(CC) $^ -o $@
+	$(CC) -O3 $^ -o $@
 
 asm: $(SRCASM)
 	$(CC) $^ -o $@

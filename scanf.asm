@@ -3,91 +3,112 @@ section .text
 global _start
 
 _start:
+
+;--------------------------------------
+; Entry: RDI = destination pointer
+; Exit: RDI = input num
+; Expects: R14 is the read buffer ptr
+; Destroys: RAX, RBX, RCX, RDX, RSI, RDI
+;--------------------------------------
+
 _scanfstart:
             push r11
             push r12
             push r13
-            push r8
+            push r8             ; save registers from syscall
             push rax
             push r14
             push rdi
-            xor rax, rax
-            xor rdi, rdi
-            mov rsi, r14
-            mov rdx, 20
+            xor rax, rax        ; syscall read
+            xor rdi, rdi        ; 0 is the stdin descriptor
+            mov rsi, r14        ; syscall read
+            mov rdx, 20         ; len of buffer
             syscall
             pop rdi
             pop r14
             pop rax
-            pop r8
+            pop r8              ; restore registers
             pop r13
             pop r12
             pop r11
 
             push r14
-            push rbx
+            push rbx            ; save registers destroyed by strlen
             push rax
-            call strlen
+            call strlen         ; len of input string
             xor rax, rax
             xor rdx, rdx
             xor r8, r8
             xor rcx, rcx
-            call ReadBuffer
+            call ReadBuffer     ; from string to int
 
-            mov [rdi], r8
+            mov [rdi], r8       ; store result in dest
             pop rax
             pop rbx
             pop r14
             ret
 
-strlen:     xor rbx, rbx
-            push r14
 
-.Next:      mov eax, [r14]
+;--------------------------------------
+; Entry: RBX = len of string
+; Exit: RDI = input num
+; Expects: R14 is the read buffer ptr
+; Destroys: RAX, RCX, R8
+;--------------------------------------
+
+strlen:     xor rbx, rbx        ; len will be in rbx
+            push r14            ; save read buffer
+
+.Next:      mov eax, [r14]      ; first symbol in eax
             mov dl, al
-            xor eax, eax
+            xor eax, eax        ; first symbol in al
             mov al, dl
-            cmp eax, 0
             sub eax, '0'
-            cmp eax, 0
+            cmp eax, 0          ; check if not a number
             jl .Done1
-            cmp eax, 9
+            cmp eax, 9          ; check if not a number
             jg .Done1
 
-            add r14, 1
-            add rbx, 1
+            add r14, 1          ; next symbol
+            add rbx, 1          ; increase rbx
             jmp .Next
 
-.Done1:     sub rbx, 1
-            pop r14
+.Done1:     sub rbx, 1          ; decrease rbx for power of 10 working
+            pop r14             ; restore read buffer
             ret
 
 
-ReadBuffer:
-.Next:      mov eax, [r14]
-            mov dl, al
-            xor eax, eax
-            mov al, dl
-            cmp eax, 0
-            sub eax, '0'
-            cmp eax, 0
-            jl .Done
-            cmp eax, 9
-            jg .Done
-            mov ch, 10
+;--------------------------------------
+; Entry: RDI = destination pointer
+; Exit: RDI = input num
+; Expects: R14 is the read buffer ptr
+; Destroys: RAX, RCX, R8
+;--------------------------------------
 
-            push rbx
+ReadBuffer:
+.Next:      mov eax, [r14]      ; symbol in eax
+            mov dl, al
+            xor eax, eax        ; symbol in al
+            mov al, dl
+            sub eax, '0'        ; convert to num
+            cmp eax, 0
+            jl .Done            ; checking if not a number
+            cmp eax, 9
+            jg .Done            ; checking if not a number
+            mov ch, 10          ; ch = 10 for the power of 10
+
+            push rbx            ; saving remaining len
 .pow:       cmp rbx, 0
-            je .Don
+            je .Don             ; loop for mupltiplying number and power of 10
             mul ch
             sub rbx, 1
             jmp .pow
 
-.Don:       pop rbx
-            sub rbx, 1
-            add r8, rax
-            add r14, 1
-            jmp .Next
+.Don:       pop rbx             ; restore remaining len
+            sub rbx, 1          ; next symbol
+            add r8, rax         ; adding to the result
+            add r14, 1          ; next symbol
+            jmp .Next           ; handling next symbol
             .Done:
 
             ret

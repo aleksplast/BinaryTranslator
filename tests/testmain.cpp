@@ -32,9 +32,12 @@ int TestBinTrans(char* file, int num, int* counter)
 
     char str1[200] = "";
     char str2[200] = "";
+    char str3[200] = "";
     int num1 = 0;
     int num2 = 0;
-    sprintf(str1, "./main %s < test.txt >> testres.txt", file);
+    sprintf(str3, "./main %s", file);
+    system(str3);
+    sprintf(str1, "./elffile %s < test.txt >> testres.txt", file);
     system(str1);
     sprintf(str2, "sudo ./asm asmprog.txt");
     system(str2);
