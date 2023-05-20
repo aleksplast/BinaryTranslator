@@ -29,7 +29,7 @@ Let's parse our tree into new form, which looks like this:
 +-------------------------------------+-------------------------------------+
 |            Function 1               |            Function 2               |
 |-------------------------------------|-------------------------------------|
-|    Block1     |        Block2       |    Block1     |        Block2       |
+|    Block0     |        Block1       |    Block0     |        Block1       |
 |---------------|---------------------|---------------|---------------------|
 |  Cmd1 |  Cmd2 | Cmd1 | Cmd2 | Cmd3  |  Cmd1 |  Cmd2 | Cmd1 | Cmd2 | Cmd3  |
 |-------|-------|------|------|-------|-------|-------|------|------|-------|
@@ -128,7 +128,6 @@ At this point, is we can execute buffer with commands with the help of **mprotec
 ## STEP III: ELF file
 
 Let's create a small ELF file, that contains only elf header, programm header and one section. We can place our buffer with translated commands in here. There is a problem with **printf** and **scanf**, so we must rewrite them by our own hands on assembly. With everything done, let's do some perfomance tests.
-
 
 
 ## Perfomance tests
